@@ -2,6 +2,7 @@
 
 namespace prelude\io;
 
+require_once(__DIR__ . '/FileRef.php');
 require_once(__DIR__ . '/IOException.php');
 require_once(__DIR__ . '/../util/Seq.php');
 
@@ -9,24 +10,31 @@ use \IllegalArgumentException;
 use \prelude\util\Seq;
 
 class FileWriter {
-    private $filename;
+    private $filerEF;
     
-    private function __construct($filename) {
-        if (!is_string($filename)) {
-            throw new InvalidArgumentException(
-                '[FileWriter.__construct] First argument $filename must be a string');
-        }
-        
-        $this->filename = $filename;    
+    private function __construct(FileRef $fileRef) {
+        $this->fileRef = $fileRef;    
     }
     
-    function writeFullText($text) {
+    function writeFull($text) {
         if (!is_string($text)) {
             throw new InvalidArgumentException(
-                '[FileWriter#writeFullText] First argument $text must be a string');
+                '[FileWriter#writeFull] First argument $text must be a string');
         }
         
-        $result = @file_put_contents($this->filename, $text);
+        $filename = $this->fileRef->getFilename();
+        $context = $this->fileRef->getContext();
+                
+        $result = $context === null
+            ? @file_put_contents(
+                $filename,
+                $text,
+                0)
+            : @file_put_contents(
+                $filename,
+                $text,
+                0,
+                $context);
         
         if ($result === false) {
             $message = error_get_last()['message'];
@@ -40,7 +48,19 @@ class FileWriter {
                 '[FileWriter#writeLines] Second argument $lineSeparator must be a string');
         }
         
-        $fhandle = @fopen($this->filename, "wb");
+        $filename = $this->fileRef->getFilename();
+        $context = $this->fileRef->getContext();
+                
+        $fhandle = $context === null
+            ? @fopen(
+                $filename,
+                'wb',
+                false)
+            : @fopen(
+                $filename,
+                'wb',
+                false,
+                $context);
         
         if ($fhandle === false) {
             $message = error_get_last()['message'];
@@ -62,13 +82,16 @@ class FileWriter {
         @fclose($fhandle);
     }
     
-    
-    static function forFile($filename) {
-        if (!is_string($filename)) {
+    static function fromFile($filename, array $context = null) {
+         if (!is_string($filename)) {
             throw new InvalidArgumentException(
-                '[FileWriter.forFile] First argument $filename must be a string');
+                '[FileWriter.fromFile] First argument $filename must be a string');
         }
-        
-        return new FileWriter($filename);
+
+        return new self(new FileRef($filename, $context));
     }
+    
+    static function fromFileRef(FileRef $fileRef) {
+        return new self($fileRef);
+    }    
 }
