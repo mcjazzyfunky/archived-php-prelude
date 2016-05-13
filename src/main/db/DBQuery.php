@@ -11,6 +11,12 @@ use prelude\util\Seq;
 use prelude\util\ValueObject;
 
 class DBQuery {
+    private $db;
+    private $query;
+    private $bindings;
+    private $limit;
+    private $offset;
+    
     function __construct(Database $db, $query, $bindings = null, $limit = null, $offset = null) {
         $this->db = $db;
         $this->query = $query;
@@ -142,6 +148,7 @@ class DBQuery {
     
     private function copy() {
         return new DBQuery(
+            $this->db,
             $this->query,
             $this->bindings,
             $this->limit,

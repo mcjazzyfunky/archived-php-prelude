@@ -29,19 +29,19 @@ class Database {
         $this->connection = null;
     }
     
-    function getDsn() {
+    function fetchDsn() {
         return $this->dsn;
     }
     
-    function getUsername() {
+    function fetchUsername() {
         return $this->username;
     }
     
-    function getPassword() {
+    function fetchPassword() {
         return $this->password;
     }
     
-    function getOptions() {
+    function fetchOptions() {
         return $this->options;
     }
     
@@ -50,41 +50,41 @@ class Database {
     }
     
     function execute($query, $bindings = null) {
-        $this->getSeqOfRecs($query, $bindings)
+        $this->fetchSeqOfRecs($query, $bindings)
             ->take(1)
             ->force();
     }
     
-    function getSingle($query, $bindings = null, $offset = 0) {
-        return @$this->getRow($query, $bindings, 1, $offset)[0];
+    function fetchSingle($query, $bindings = null, $offset = 0) {
+        return @$this->fetchRow($query, $bindings, 1, $offset)[0];
     }
     
-    function getRow($query, $bindings = null, $limit = null, $offset = 0) {
-        return @$this->getRows($query, $bindings, $limit, $offset)[0];
+    function fetchRow($query, $bindings = null, $limit = null, $offset = 0) {
+        return @$this->fetchRows($query, $bindings, $limit, $offset)[0];
     }
     
-    function getRows($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfRows($query, $bindings, $limit, $offset)
+    function fetchRows($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfRows($query, $bindings, $limit, $offset)
             ->toArray(); 
     }
     
-    function getSeqOfRows($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfRecs($query, $bindings, $limit, $offset)
+    function fetchSeqOfRows($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfRecs($query, $bindings, $limit, $offset)
             ->map(function ($rec) {
                 return array_values($rec);
             });
     }
 
-    function getRec($query, $bindings = null, $offset = 0) {
-        return @$this->getRecs($query, $bindings, $limit, $offset)[0];
+    function fetchRec($query, $bindings = null, $offset = 0) {
+        return @$this->fetchRecs($query, $bindings, $limit, $offset)[0];
     }
     
-    function getRecs($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfRecs($query, $bindings, $limit, $offset)
+    function fetchRecs($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfRecs($query, $bindings, $limit, $offset)
             ->toArray(); 
     }
     
-    function getSeqOfRecs($query, $bindings = null, $limit = null, $offset = 0) {
+    function fetchSeqOfRecs($query, $bindings = null, $limit = null, $offset = 0) {
         $qry = self::limitQueryByLimitClause($query, $limit, $offset);
         
         return new Seq(function () use ($qry, $bindings) {
@@ -114,38 +114,38 @@ class Database {
         });
     }
     
-    function getVO($query, $bindings = null, $limit = null, $offset = 0) {
-        return @$this->getVOs($query, $bindings, $limit, $offset)[0];
+    function fetchVO($query, $bindings = null, $limit = null, $offset = 0) {
+        return @$this->fetchVOs($query, $bindings, $limit, $offset)[0];
     }
     
-    function getVOs($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfVOs($query, $bindings, $limit, $offset)
+    function fetchVOs($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfVOs($query, $bindings, $limit, $offset)
             ->toArray(); 
     }
     
-    function getSeqOfVOs($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfRecs($query, $bindings, $limit, $offset)
+    function fetchSeqOfVOs($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfRecs($query, $bindings, $limit, $offset)
             ->map(function ($rec) {
                 return new ValueObject($rec);
             });
     }
 
-    function getSingles($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfSingles($query, $bindings, $limit, $offset)
+    function fetchSingles($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfSingles($query, $bindings, $limit, $offset)
             ->toArray();
     }
 
-    function getSeqOfSingles($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->getSeqOfRows($query, $bindings, $limit, $offset)
+    function fetchSeqOfSingles($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->fetchSeqOfRows($query, $bindings, $limit, $offset)
             ->map(function ($row) {
                 return @$row[0];
             });
     }
 
-    function getMap($query, $binings = null, $limit = null, $offset = 0) {
+    function fetchMap($query, $binings = null, $limit = null, $offset = 0) {
         $ret = [];
         
-        $rows = $this->getSeqOfRows($query, $bindings, $limit, $offset);
+        $rows = $this->fetchSeqOfRows($query, $bindings, $limit, $offset);
         
         foreach ($seq as $row) {
             $ret[@$row[0]] = @$row[1];

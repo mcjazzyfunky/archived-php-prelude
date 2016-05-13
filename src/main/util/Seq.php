@@ -104,6 +104,47 @@ class Seq implements IteratorAggregate {
         });
     }
     
+    function flatten() {
+        return new Seq(function () {
+            foreach ($this as $item) {
+                foreach (Seq::from($item) as $subitem) {
+                    yield $subitem;
+                }
+            } 
+        });
+    }
+    
+    function flatMap(callable $fn) {
+        return $this->map($fn)->flatten();
+    }
+    
+    function prepend($item) {
+        return Seq::concat(Seq::of($item), $this);
+    }
+    
+    function prependMany($items) {
+        return Seq::concat($items, $this);
+    }
+
+    function append($item) {
+        return Seq::concat($this, Seq::of($item));
+    }
+    
+    function appendMany($items) {
+        return Seq::concat($this, $items);
+    }
+    
+    function peek(callable $action) {
+        return new Seq(function () use ($action) {
+            $idx = -1; 
+            
+            foreach ($this as $item) {
+                $action($this, -$idx);
+                yield $item;
+            }
+        });
+    }
+    
     function reduce(callable $fn, $initialValue = null) {
         $idx = -1;
         $lastValue = $initialValue;
@@ -119,6 +160,58 @@ class Seq implements IteratorAggregate {
         }
         
         return $ret;
+    }
+    
+    function max(callable $comparator = null, $defaultValue = null) {
+        $ret = $defaultValue;
+        $isFirst = true;
+        
+        foreach ($this as $item) {
+            if ($isFirst) {
+                $ret = $item;
+                $isFirst = false;
+            } else {
+                if ($comparator === null) {
+                    if ($item > $ret) {
+                        $ret = $item;
+                    }
+                } else {
+                    $result = $comparator($item, $ret);
+                    
+                    if ($result >= 1) {
+                        $ret = $item;
+                    }
+                }             
+            }
+        }
+        
+        return $ret;
+    }
+
+    function min(callable $comparator = null, $defaultValue = null) {
+        $ret = $defaultValue;
+        $isFirst = true;
+        
+        foreach ($this as $item) {
+            if ($isFirst) {
+                $ret = $item;
+                $isFirst = false;
+            } else {
+                if ($comparator === null) {
+                    if ($item < $ret) {
+                        $ret = $item;
+                    }
+                } else {
+                    $result = $comparator($ret, $item);
+                    
+                    if ($result >= 1) {
+                        $ret = $item;
+                    }
+                }             
+            }
+        }
+
+        return $ret;        
     }
     
     function count() {
@@ -171,6 +264,12 @@ class Seq implements IteratorAggregate {
         }
         
         return $ret;
+    }
+    
+    static function of($item) {
+        return new Seq(function () use ($item) {
+            yield $item; 
+        });
     }
     
     static function from($source) {
@@ -238,6 +337,80 @@ class Seq implements IteratorAggregate {
                 array_shift($values);
 
                 yield $value;
+            }
+        });
+    }
+    
+    static function repeat($item, $count = null) {
+        return new Seq(function () use ($item, $count) {
+            $idx = -1;
+            
+            while ($count === null || ++$idx < $count) {
+                yield $item;
+            }
+        });
+    }
+    
+    static function cycle($items, $count = null) {
+        $seq = Seq::from($items);
+
+        return new Seq(function () use ($seq, $count) {
+            $idx = -1;
+            
+            while ($count === null || ++$idx < $count) {
+                foreach ($seq as $item) {
+                    yield $item;
+                }
+            }
+        });
+    }
+    
+    static function concat($iterable1, $iterable2) {
+        return self::concatMany([$iterable1, $iterable2]);
+    }
+     
+    static function concatMany($iterable) {
+        $seq = Seq::from($iterable);
+        
+        return new Seq(function () use ($seq) {
+            foreach ($seq as $items) {
+                foreach(Seq::from($items) as $item) {
+                    yield $item;
+                }
+            } 
+        });
+    }
+
+    static function zip($iterable1, $iterable2, callable $fn = null) {
+        $seq1 = Seq::from($iterable1);
+        $seq2 = Seq::from($iterable2);
+        
+        return new Seq(function () use ($seq1, $seq2, $fn) {
+            $generator1 = null;
+            $generator2 = null;
+            $exception = null;
+             
+            try {
+                $generator1 = $seq1->getIterator();
+                $generator2 = $seq2->getIterator();
+                $idx = -1;
+                
+                while ($generator1->valid() && $generator2->valid()) {
+                    $item1 = $generator1->current();
+                    $item2 = $generator2->current();
+                    
+                    $generator1->next();
+                    $generator2->next();
+                    
+                    if ($fn === null) {
+                        yield [$item1, $item2];
+                    } else {
+                        yield $fn($item1, $item2, ++$idx);
+                    }
+                }
+            } finally {
+                $generator1 = null;
+                $generator2 = null;
             }
         });
     }

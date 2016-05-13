@@ -38,7 +38,9 @@ class DatabaseTest extends PHPUnit_Framework_TestCase {
 
         $users =
             $database
-                ->query('select * from user')
+                ->query('select * from user where country in (?, ?)')
+                ->bind(['USA', 'UK'])
+                ->limit(100)
                 ->fetchSeqOfVOs();    
 
         print "\nKnown users by ID:\n\n";
