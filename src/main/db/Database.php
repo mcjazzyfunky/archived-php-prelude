@@ -3,6 +3,7 @@
 namespace prelude\db;
 
 require_once __DIR__ . '/DBException.php';
+require_once __DIR__ . '/DBQuery.php';
 require_once __DIR__ . '/../util/ValueObject.php';
 require_once __DIR__ . '/../util/Seq.php';
 
@@ -42,6 +43,10 @@ class Database {
     
     function getOptions() {
         return $this->options;
+    }
+    
+    function query($query, $bindings = null, $limit = null, $offset = 0) {
+        return new DBQuery($this, $query, $bindings, $limit, $offset);
     }
     
     function execute($query, $bindings = null) {
@@ -179,7 +184,7 @@ class Database {
 
     // --- private methods ------------------------------------------
     
-    private function getConnection() {
+    function getConnection() {
         $ret = $this->connection;
         
         if ($ret === null) {
