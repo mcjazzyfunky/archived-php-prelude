@@ -2,7 +2,8 @@
 
 namespace prelude\io;
 
-require_once(__DIR__ . '/FileRef.php');
+require_once(__DIR__ . '/File.php');
+require_once(__DIR__ . '/Files.php');
 require_once(__DIR__ . '/IOException.php');
 require_once(__DIR__ . '/../util/Seq.php');
 
@@ -10,10 +11,12 @@ use \IllegalArgumentException;
 use \prelude\util\Seq;
 
 class FileWriter {
-    private $filerEF;
+    private $filename;
+    private $context;
     
-    private function __construct(FileRef $fileRef) {
-        $this->fileRef = $fileRef;    
+    private function __construct($filename, array $context = null) {
+        $this->filename = $filename;
+        $this->context = $context;
     }
     
     function writeFull($text) {
@@ -22,8 +25,13 @@ class FileWriter {
                 '[FileWriter#writeFull] First argument $text must be a string');
         }
         
-        $filename = $this->fileRef->getFilename();
-        $context = $this->fileRef->getContext();
+        $filename = $this->filename;
+        $dir = dirname($filename);
+        $context = $this->context;
+                
+        if (!is_dir($dir)) {
+            Files::makeDir($dir, 0777, true);
+        }
                 
         $result = $context === null
             ? @file_put_contents(
@@ -48,8 +56,8 @@ class FileWriter {
                 '[FileWriter#writeLines] Second argument $lineSeparator must be a string');
         }
         
-        $filename = $this->fileRef->getFilename();
-        $context = $this->fileRef->getContext();
+        $filename = $this->filename;
+        $context = $this->context;
                 
         $fhandle = $context === null
             ? @fopen(
@@ -82,16 +90,16 @@ class FileWriter {
         @fclose($fhandle);
     }
     
-    static function fromFile($filename, array $context = null) {
+    static function fromFilename($filename, array $context = null) {
          if (!is_string($filename)) {
             throw new InvalidArgumentException(
                 '[FileWriter.fromFile] First argument $filename must be a string');
         }
 
-        return new self(new FileRef($filename, $context));
+        return new self($filename, $context);
     }
     
-    static function fromFileRef(FileRef $fileRef) {
-        return new self($fileRef);
+    static function fromFile(File $file) {
+        return new self($file->getPath());
     }    
 }

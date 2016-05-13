@@ -2,7 +2,7 @@
 
 namespace prelude\io;
 
-require_once(__DIR__ . '/FileRef.php');
+require_once(__DIR__ . '/File.php');
 require_once(__DIR__ . '/IOException.php');
 require_once(__DIR__ . '/../util/Seq.php');
 
@@ -10,15 +10,17 @@ use \IllegalArgumentException;
 use \prelude\util\Seq;
 
 class FileReader {
-    private $fileRef;
+    private $filename;
+    private $context;
     
-    private function __construct(FileRef $fileRef) {
-        $this->fileRef = $fileRef;
+    private function __construct($filename, $context = null) {
+        $this->filename = $filename;
+        $this->context = $context;
     }
     
     function readFull() {
-        $filename = $this->fileRef->getFilename();
-        $context = $this->fileRef->getContext();
+        $filename = $this->filename;
+        $context = $this->context;
         
         $ret = $context === null
             ? @file_get_contents($filename)
@@ -34,57 +36,60 @@ class FileReader {
     
     function readLines() {
         return new Seq(function() {
-            $context = $this->fileRef->getContext();
+            $filename = $this->filename;
+            $context = $this->context;
             
-            $fhandle = $context === null
-                ? @fopen(
-                    $this->fileRef->getFilename(),
-                    'rb',
-                    false)
-                : @fopen(
-                    $this->fileRef->getFilename(),
-                    'rb',
-                    false,
-                    $context);
-            
-            if ($fhandle === false) {
-                $message = error_get_last()['message'];
-                throw new IOException($message);
-            }
-            
-            while (($line = @fgets($fhandle)) !== false) {
-                $length = strlen($line);
+            try {
+                $fhandle = $context === null
+                    ? @fopen(
+                        $filename,
+                        'rb',
+                        false)
+                    : @fopen(
+                        $filename,
+                        'rb',
+                        false,
+                        $context);
                 
-                while ($length > 0
-                    && ($line[$length - 1] === "\r" || $line[$length -1] === "\n")) {
-                
-                    --$length;
+                if ($fhandle === false) {
+                    $message = error_get_last()['message'];
+                    throw new IOException($message);
                 }
                 
+                while (($line = @fgets($fhandle)) !== false) {
+                    $length = strlen($line);
+                    
+                    while ($length > 0
+                        && ($line[$length - 1] === "\r" || $line[$length -1] === "\n")) {
+                    
+                        --$length;
+                    }
+                    
+                    
+                    yield substr($line, 0, $length);
+                }
                 
-                yield substr($line, 0, $length);
-            }
-            
-            if (!feof($fhandle)) {
-                $message = error_get_last()['message'];
+                if (!feof($fhandle)) {
+                    $message = error_get_last()['message'];
+                    @fclose($fhandle);
+                    throw new IOException($message);
+                }
+            } finally {
                 @fclose($fhandle);
-                throw new IOException($message);
             }
-            
-            @fclose($fhandle);
         });
     }
     
-    static function fromFile($filename, array $context = null) {
+    static function fromFilename($filename, array $context = null) {
          if (!is_string($filename)) {
             throw new InvalidArgumentException(
-                '[FileReader.fromFile] First argument $filename must be a string');
+                '[FileReader.fromFilename] First argument $filename must be a string');
         }
 
-        return new self(new FileRef($filename, $context));
+        return new self($filename, $context);
     }
     
-    static function fromFileRef(FileRef $fileRef) {
-        return new self($fileRef);
+    static function fromFile(File $file) {
+        return new self($file->getPath(), null);
     }
 }

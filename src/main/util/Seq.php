@@ -56,6 +56,20 @@ class Seq implements IteratorAggregate {
         });
     }
     
+    function takeWhile(callable $pred) {
+        return new Seq(function () use ($pred) {
+            $idx = -1;
+            
+            foreach ($this as $item) {
+                if (!$pred($item, ++$idx)) {
+                    break;
+                }
+                
+                yield $item;
+            }
+        });
+    }
+    
     function skip($n) {
         if (!is_int($n)) {
             throw new InvalidArgumentException(
@@ -71,6 +85,40 @@ class Seq implements IteratorAggregate {
                 }
             }
         });
+    }
+
+    function skipWhile(callable $pred) {
+        return new Seq(function () use ($pred) {
+            $idx = -1;
+            $started = false;
+            
+            foreach ($this as $item) {
+                if (!$started && !$pred($item, ++$idx)) {
+                    $started = true;
+                }
+                
+                if ($started) {
+                    yield $item;
+                }
+            }
+        });
+    }
+    
+    function reduce(callable $fn, $initialValue = null) {
+        $idx = -1;
+        $lastValue = $initialValue;
+        
+        foreach ($this as $item) {
+            $lastValue = $fn($lastValue, $item, ++$idx);
+        }
+        
+        if ($idx === -1) {
+            $ret = $initialValue;
+        } else {
+            $ret = $lastValue;
+        }
+        
+        return $ret;
     }
     
     function count() {
@@ -88,10 +136,15 @@ class Seq implements IteratorAggregate {
             throw new InvalidArgumentException(
                 '[Seq.each] First argument $fn must be a function');
         }
+       
+        $idx = -1;
         
         foreach ($this as $item) {
-            $fn($item);
+            ++$idx;
+            $fn($item, $idx);
         }
+        
+        return $idx;
     }
     
     function toArray() {
@@ -116,19 +169,72 @@ class Seq implements IteratorAggregate {
         return $ret;
     }
     
-    static function range($start, $end) {
+    static function from($source) {
+        $ret = null;
+        
+        if ($source instanceof Seq) {
+            $ret = $source;
+        } else if (is_array($source) || $source instanceof IteratorAggregate) {
+            $ret = new Seq(function () use ($source) {
+                foreach ($source as $item) {
+                    yield $item;
+                } 
+            });
+        } else {
+            $ret = self::nil();
+        }
+        
+        return $ret;
+    }
+    
+    static function isIterable($source) {
+        return (is_array($source) || $source instanceof IteratorAggregate);
+    }
+    
+    static function nil() {
+        return Seq::from([]); 
+    }
+    
+    static function range($start, $end, $step = 1) {
         if (!is_int($start)) {
             throw new InvalidArgumentException(
                 '[Seq.range] First argument $start must be an integer');
         } else if (!is_int($end)) {
             throw new InvalidArgumentException(
                 '[Seq.range] Second argument $end must be an integer');
+        } else if (!is_int($step) || $step === 0) {
+            throw new InvalidArgumentException(
+                '[Seq.range] Thrid argument $step must be an non-zero integer');
         }
         
-        return new Seq(function () use ($start, $end) {
-            for ($i = $start; $i < $end; ++$i) {
-                yield $i;
-            } 
+        return new Seq(function () use ($start, $end, $step) {
+            if ($start < $end && $step > 0) {
+                for ($i = $start; $i < $end; $i += $step) {
+                    yield $i;
+                } 
+            } else if ($start > $end && $step < 0) {
+                for ($i = $start; $i > $end; $i += $step) {
+                    yield $i;
+                } 
+            }
+        });
+    }
+    
+    static function iterate(array $startValues, callable $fn) {
+        return new Seq(function () use ($startValues, $fn) {
+            foreach ($startValues as $value) {
+                yield $value;
+            }
+            
+            $values = $startValues;
+
+            while (true) {
+                $value = call_user_func_array($fn, $values);
+                array_push($values, $value);
+                array_shift($values);
+
+                yield $value;
+            }
         });
     }
 }

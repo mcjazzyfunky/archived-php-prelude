@@ -2,9 +2,9 @@
 
 namespace prelude\io;
 
-require_once(__DIR__ . '/../../main/util/Seq.php');
-require_once(__DIR__ . '/../../main/io/FileRef.php');
-require_once(__DIR__ . '/../../main/io/FileReader.php');
+require_once __DIR__ . '/../../main/util/Seq.php';
+require_once __DIR__ . '/../../main/io/File.php';
+require_once __DIR__ . '/../../main/io/FileReader.php';
 
 use prelude\util\Seq;
 
@@ -17,7 +17,7 @@ class FileReaderTest extends \PHPUnit_Framework_TestCase {
         file_put_contents($filename, "a\nb\nc");
         
         $content =
-            FileReader::fromFile($filename)
+            FileReader::fromFilename($filename)
                 ->readFull();
    
         $this->assertEquals($content, "a\nb\nc");
@@ -28,7 +28,7 @@ class FileReaderTest extends \PHPUnit_Framework_TestCase {
         
         file_put_contents($filename, "a\r\nb\r\nc");
         
-        $lines = FileReader::fromFile($filename)
+        $lines = FileReader::fromFilename($filename)
             ->readLines()
             ->toArray();
 
