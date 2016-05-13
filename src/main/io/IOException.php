@@ -2,8 +2,8 @@
 
 namespace prelude\io;
 
-use \Exception;
-use \IllegalArgumentException;
+use Exception;
+use IllegalArgumentException;
 
 class IOException extends Exception {
     function __construct($message) {

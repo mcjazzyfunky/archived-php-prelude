@@ -6,7 +6,7 @@ require_once dirname(__FILE__) . '/File.php';
 require_once dirname(__FILE__) . '/IOException.php';
 require_once dirname(__FILE__) . '/../util/Seq.php';
 
-use \prelude\util\Seq;
+use prelude\util\Seq;
 
 class Files {
     static function makeDir($dir, $mode = 0777, $recursive = false) {

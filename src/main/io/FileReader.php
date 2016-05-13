@@ -6,8 +6,8 @@ require_once(__DIR__ . '/File.php');
 require_once(__DIR__ . '/IOException.php');
 require_once(__DIR__ . '/../util/Seq.php');
 
-use \IllegalArgumentException;
-use \prelude\util\Seq;
+use IllegalArgumentException;
+use prelude\util\Seq;
 
 class FileReader {
     private $filename;

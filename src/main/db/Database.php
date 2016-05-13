@@ -2,6 +2,15 @@
 
 namespace prelude\db;
 
+require_once __DIR__ . '/DBException.php';
+require_once __DIR__ . '/../util/ValueObject.php';
+require_once __DIR__ . '/../util/Seq.php';
+
+use PDO;
+use prelude\util\Seq;
+use prelude\util\ValueObject;
+
+
 class Database {
     private $dsn;
     private $username;
@@ -9,7 +18,7 @@ class Database {
     private $options;
     private $connection;
     
-    private static registeredDBs = [];
+    private static $registeredDBs = [];
     
     function __construct($dsn, $username = null, $password = null, array $options = null) {
         $this->dsn = $dsn;
@@ -36,64 +45,108 @@ class Database {
     }
     
     function execute($query, $bindings = null) {
-        $conn = $this->getConnection();
+        $this->getSeqOfRecs($query, $bindings)
+            ->take(1)
+            ->force();
     }
     
-    function getOne($query, $bindings = null) {
-        
+    function getSingle($query, $bindings = null, $offset = 0) {
+        return @$this->getRow($query, $bindings, 1, $offset)[0];
     }
     
-    function getRow($query, $bindings = null, $offset = 0) {
-        
+    function getRow($query, $bindings = null, $limit = null, $offset = 0) {
+        return @$this->getRows($query, $bindings, $limit, $offset)[0];
     }
     
-    function getRows($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getRows($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfRows($query, $bindings, $limit, $offset)
+            ->toArray(); 
     }
     
-    function getSeqOfRows($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getSeqOfRows($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfRecs($query, $bindings, $limit, $offset)
+            ->map(function ($rec) {
+                return array_values($rec);
+            });
     }
 
     function getRec($query, $bindings = null, $offset = 0) {
-        
+        return @$this->getRecs($query, $bindings, $limit, $offset)[0];
     }
     
-    function getRecs($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getRecs($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfRecs($query, $bindings, $limit, $offset)
+            ->toArray(); 
     }
     
-    function getSeqOfRecs($query, $bindings = null, $count = null, $offset = 0) {
+    function getSeqOfRecs($query, $bindings = null, $limit = null, $offset = 0) {
+        $qry = self::limitQueryByLimitClause($query, $limit, $offset);
         
+        return new Seq(function () use ($qry, $bindings) {
+            $conn = $this->getConnection();
+            $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
+            
+            if ($stmt === false) {
+                $errorInfo = $conn->errorInfo();
+                throw new DBException($errorInfo[2]);
+            }
+            
+            try {
+                $result = $stmt->execute($bindings);
+                
+                while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    yield $rec;
+                }
+            } finally {
+                $stmt->closeCursor();
+            }
+        });
     }
     
-    function getVO($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getVO($query, $bindings = null, $limit = null, $offset = 0) {
+        return @$this->getVOs($query, $bindings, $limit, $offset)[0];
     }
     
-    function getVOs($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getVOs($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfVOs($query, $bindings, $limit, $offset)
+            ->toArray(); 
     }
     
-    function getSeqOfVOs($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getSeqOfVOs($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfRecs($query, $bindings, $limit, $offset)
+            ->map(function ($rec) {
+                return new ValueObject($rec);
+            });
     }
 
-    function getFirsts($query, $binings = null, $count = null, $offset = 0) {
-        
+    function getSingles($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfSingles($query, $bindings, $limit, $offset)
+            ->toArray();
     }
 
-    function getSeqOfFirsts($query, $bindings = null, $count = null, $offset = 0) {
-        
+    function getSeqOfSingles($query, $bindings = null, $limit = null, $offset = 0) {
+        return $this->getSeqOfRows($query, $bindings, $limit, $offset)
+            ->map(function ($row) {
+                return @$row[0];
+            });
     }
 
-    function getMap($query, $binings = null, $count = null, $offset = 0) {
+    function getMap($query, $binings = null, $limit = null, $offset = 0) {
+        $ret = [];
+        
+        $rows = $this->getSeqOfRows($query, $bindings, $limit, $offset);
+        
+        foreach ($seq as $row) {
+            $ret[@$row[0]] = @$row[1];
+        }
+            
+        return $ret;
     }
     
-    // --- static methods -------------------------------------------
+    // --- public static methods ------------------------------------
 
-    static function registerDB($alias, $dsn, $username = null, $password = null) {
-        $ret = new self($dsn, $username, $password);
+    static function registerDB($alias, $dsn, $username = null, $password = null, $options = null) {
+        $ret = new self($dsn, $username, $password, $options);
         self::unregister($alias);
         self::$registeredDBs[$alias] = $ret;
         return $ret;
@@ -102,7 +155,7 @@ class Database {
     static function unregisterDB($alias) {
         if (isset(self::$registeredDBs[$alias])) {
             $db = self::$registeredDBs[$alias];
-            $db->close();
+            $db->connection = null;
             unset(self::$registeredDBs[$alias]);
         }
     }
@@ -111,10 +164,10 @@ class Database {
         $ret = null;
     
         if (!isset(self::$registeredDBs[$alias])) {
-            throw new DatabaseException(
+            throw new DBException(
                 "[Database.getDB] Database '$alias' is not registered!");
         } else {
-            $ret = self::registeredDBs[$alias];
+            $ret = self::$registeredDBs[$alias];
         }
     
         return $ret;
@@ -126,11 +179,18 @@ class Database {
         $ret = $this->connection;
         
         if ($ret === null) {
+            $options = $this->options;
+           
+            // TODO: Quite sure this is a stupid idea... 
+            if (empty($options[PDO::ATTR_TIMEOUT])) {
+                $options[PDO::ATTR_TIMEOUT] = 30;
+            }
+
             $this->connection = new PDO(
                 $this->dsn,
                 $this->username,
                 $this->password,
-                $this->options);
+                $options);
                 
             $ret = $this->connection;
         }
@@ -138,32 +198,16 @@ class Database {
         return $ret;
     }
     
-    private runQuery($query, $bindings = null) {
-        if (!is_string($query)) {
-            throw new IllegalArgumentException(
-                "[Database#runQuery] Second argument $query must be a string";
-        } else if (!is_scalar($bindings) && !is_array($bindings)) {
-            throw new IllegalArgumentException(
-                "[Database#runQuery] Second argument $bindings must be a scalar or an array";   
-        }
-        
-        
-        
-        $stmt = $db->prepare('SELECT * FROM tbl WHERE id = :id');
-        
-    $stmt->bindParam(':id', $user_id, PDO::PARAM_INT);
-    $result = $stmt->execute();
-    }
-
-    private function limitQueryByLimitClause($qry, $count, $offset) {
+    // TODO: This is currently only working if DBMS supports limit and offset clauses
+    private static function limitQueryByLimitClause($qry, $limit, $offset) {
         $ret = $qry;
         
-        if ($count !== null || $offset > 0) {
-            if ($count === null) {
+        if ($limit !== null || $offset > 0) {
+            if ($limit === null) {
                 // TODO
-                $count = "2000000000";
-            } elseif ($count <= 0) {
-                $count = 0;
+                $limit = "2000000000";
+            } elseif ($limit <= 0) {
+                $limit = 0;
             }
       
             $offset = max(0, (int)$offset);
@@ -171,49 +215,12 @@ class Database {
            $qryLower = strtolower($qry);
       
             if (strpos($qryLower, 'limit') === false && strpos($qryLower, 'union') === false) {
-                $ret = "$qry\nlimit $count offset $offset";
+                $ret = "$qry\nlimit $limit offset $offset";
             } else {
-                $ret = "select ___.*\nfrom(\n$qry\n) as ___\nlimit $count offset $offset";
+                $ret = "select ___.*\nfrom(\n$qry\n) as ___\nlimit $limit offset $offset";
             }
         }
 
         return $ret;
     }
 }
-
-
-        /*
-        
-        // returns integer value
-        $db->getOne(
-            'select count(*) from users where country=:0 and city=:1',
-            [$country, $city]);
-        
-        // returns integer value
-        $db->getOne(
-            'select count(*) from users where country=:country and city=:city',
-            ['country' => $country, 'city' => $city]);
-        
-
-        // returns something like [[111, 'John', 'Doe'], [222, 'Jane', 'Whoever']]
-        $db->getRows(
-            'select id, firstName, lastName from users where country=:0 and city=:1',
-            [$country, $city]);
-
-        // returns something like
-        // [['id' => 111, 'firstName' => 'John', 'lastName' => 'Doe'],
-        //  ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever']]
-        $db->getRecs(
-            'select id, firstName, lastName from users where country=:0 and city=:1',
-            [$country, $city]);
-
-        // returns something like
-        // LazySequence(
-        //    ['id' => 111, 'firstName' => 'John', 'lastName' => 'Doe'],
-        //    ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'])
-        $db->getSeqOfRecs(
-            'select * from users where country=:0 and city=:1',
-            [$country, $city]);
-        
-        */
-        

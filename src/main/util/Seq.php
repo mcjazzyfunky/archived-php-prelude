@@ -2,11 +2,11 @@
 
 namespace prelude\util;
 
-use \Closure;
-use \Generator;
-use \InvalidArgumentException;
-use \IteratorAggregate;
-use \UnexpectedValueException; 
+use Closure;
+use Generator;
+use InvalidArgumentException;
+use IteratorAggregate;
+use UnexpectedValueException; 
 
 class Seq implements IteratorAggregate {
     private $generatorFunction;
@@ -155,6 +155,10 @@ class Seq implements IteratorAggregate {
         }
         
         return $ret;
+    }
+    
+    function force() {
+        return Seq::from($this->toArray());
     }
     
     function getIterator() {

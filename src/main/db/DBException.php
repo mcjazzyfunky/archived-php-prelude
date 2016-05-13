@@ -2,8 +2,8 @@
 
 namespace prelude\db;
 
-use \Exception;
-use \IllegalArgumentException;
+use Exception;
+use IllegalArgumentException;
 
 class DBException extends Exception {
     function __construct($message) {
