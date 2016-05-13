@@ -10,18 +10,26 @@ error_reporting(E_ALL);
 
 class DatabaseTest extends PHPUnit_Framework_TestCase {
     function testRun() {
-        $db = new Database('sqlite::memory');
+        Database::registerDB('shop', new Database('sqlite::memory:'));
         
-        $db->execute('drop table if exists user');
-        $db->execute('create table user (id integer primary key, firstName varchar, lastName varchar)');
-        $db->execute("insert into user values (111, 'John', 'Doe')");
-        $db->execute("insert into user values (222, 'Jane', 'Whatever')");
+        $db = Database::getDB('shop');
+        
+        $db->execute('create table user (id primary key, firstName, lastName, city, country)');
+        $db->execute("insert into user values (111, 'John', 'Doe', 'Seattle', 'USA')");
+        $db->execute("insert into user values (222, 'Jane', 'Whatever', 'London', 'UK')");
         
         $users = $db->getSeqOfVOs('select * from user');
         print "\nKnown users by ID:\n\n";
             
         foreach ($users as $user) {
-            printf("%d: %s %s\n", $user->id, $user->firstName, $user->lastName);
+            printf(
+                "%d: %s %s - %s, %s\n",
+                $user->id,
+                $user->firstName,
+                $user->lastName,
+                $user->city,
+                $user->country
+            );
         }
         
         flush();

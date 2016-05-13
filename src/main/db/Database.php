@@ -93,9 +93,15 @@ class Database {
             
             try {
                 $result = $stmt->execute($bindings);
-                
+            
                 while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     yield $rec;
+                }
+                
+                $errorInfo = $stmt->errorInfo();
+                
+                if (0 + $errorInfo[0] !== 0) {
+                    throw new DBException($errorInfo[2]); 
                 }
             } finally {
                 $stmt->closeCursor();
@@ -145,11 +151,9 @@ class Database {
     
     // --- public static methods ------------------------------------
 
-    static function registerDB($alias, $dsn, $username = null, $password = null, $options = null) {
-        $ret = new self($dsn, $username, $password, $options);
-        self::unregister($alias);
-        self::$registeredDBs[$alias] = $ret;
-        return $ret;
+    static function registerDB($alias, Database $db) {
+        self::unregisterDB($alias);
+        self::$registeredDBs[$alias] = $db;
     }
     
     static function unregisterDB($alias) {
