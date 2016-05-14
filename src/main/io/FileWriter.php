@@ -7,7 +7,7 @@ require_once(__DIR__ . '/Files.php');
 require_once(__DIR__ . '/IOException.php');
 require_once(__DIR__ . '/../util/Seq.php');
 
-use IllegalArgumentException;
+use InvalidArgumentException;
 use prelude\util\Seq;
 
 class FileWriter {
@@ -52,7 +52,7 @@ class FileWriter {
     
     function writeLines(Seq $lines, $lineSeparator = "\r\n") {
         if (!is_string($lineSeparator)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[FileWriter#writeLines] Second argument $lineSeparator must be a string');
         }
         

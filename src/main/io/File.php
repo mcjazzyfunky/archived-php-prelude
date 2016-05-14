@@ -4,6 +4,8 @@ namespace prelude\io;
 
 require_once(__DIR__ . '/IOException.php');
 
+use InvalidArgumentException;
+
 class File {
     private $path;
     

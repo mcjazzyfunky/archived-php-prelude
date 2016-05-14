@@ -7,6 +7,7 @@ require_once __DIR__ . '/DBQuery.php';
 require_once __DIR__ . '/../util/ValueObject.php';
 require_once __DIR__ . '/../util/Seq.php';
 
+use InvalidArgumentException;
 use PDO;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
