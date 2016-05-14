@@ -6,6 +6,7 @@ require_once dirname(__FILE__) . '/File.php';
 require_once dirname(__FILE__) . '/IOException.php';
 require_once dirname(__FILE__) . '/../util/Seq.php';
 
+use InvalidArgumentException;
 use prelude\util\Seq;
 
 class Files {
@@ -46,12 +47,11 @@ class Files {
         }
     }
 
-
     static function delete($file) {
         $ret = false;
 
         if (is_dir($file)) {
-            throw new IOException("'$file' is a directory - cannot be removed by function 'Sys::delete'!");
+            throw new IOException("[Files.delete] '$file' is a directory");
         }
 
         if (is_file($file) || is_link($file)) {
@@ -63,82 +63,6 @@ class Files {
         }
 
         return $ret;
-    }
-
-    static function listDir($dir, array $options = null) {
-        return new Seq(function () use ($dir, $options) {
-            if (is_dir($dir)) {
-                $returnFilenames = @$options['returnFilenames'];
-                
-                if (!is_bool($returnFilenames)) {
-                    $returnFilenames = false;
-                }
-                
-                $types = @$options['types'];
-                
-                if (!is_array($types)) {
-                    $types = ['f', 'd'];
-                }
-                
-                $includeFiles = in_array('f', $types);
-                $includeDirs = in_array('d', $types);
-                $includeLinks = in_array('l', $types);
-                
-                $recursive = @$options['recursive'];
-                
-                if (!is_bool($recursive)) {
-                    $recursive = false;
-                }
-                
-                $fileSelector = @$options['fileSelector'];
-                
-                if (!is_string($fileSelector) || trim($fileSelector) === '') {
-                    $fileSelector = null;
-                }
-
-                $dirSelector = @$options['dirSelector'];
-                
-                if (!is_string($dirSelector) || trim($dirSelector) === '') {
-                    $dirSelector = null;
-                }
-
-                $linkSelector = @$options['linkSelector'];
-                
-                if (!is_string($linkSelector) || trim($linkSelector) === '') {
-                    $linkSelector = null;
-                }
-                
-                $items = scandir($dir, SCANDIR_SORT_ASCENDING);
-                
-                foreach ($items as $item) {
-                    if ($item === '.' || $item === '..') {
-                        continue;
-                    }
-                    
-                    $path = Files::combinePathes($dir, $item);
-                    $isDir = is_dir($path);
-                    
-                    if ($includeFiles && is_file($path) && self::pathIncluded($path, $fileSelector)
-                        || $includeDirs && $isDir && self::pathIncluded($path, $dirSelector)
-                        || $includeLinks && is_link($path) && self::pathIncluded($path, $linkSelector)) {
-
-                        if ($returnFilenames) {
-                            yield $path;
-                        } else {
-                            yield new File($path);
-                        }
-                    }
-                    
-                    if ($recursive && $isDir) {
-                        $subitems = self::listDir($path, $options);
-                        
-                        foreach ($subitems as $subitem) {
-                            yield $subitem;
-                        }
-                    }
-                }
-            }
-        });
     }
 
     static function isAbsolutePath($path) {
@@ -153,7 +77,7 @@ class Files {
         return $ret;
     }
     
-    static function combinePathes($path1, $path2, $useNativeDirectorySeparator = false) {            
+    static function combinePaths($path1, $path2, $useNativeDirectorySeparator = false) {            
         $ret = '';
         $path1 = self::normalizePath($path1, true);
         $path2 = self::normalizePath($path2, true);
@@ -180,15 +104,12 @@ class Files {
         $ret = '';
         $ret = trim($path); // TODO?
         $ret = str_replace('\\', '/', $ret);
+        $ret = str_replace('/./', '/', $ret);
             
         if ($useNativeDirectorySeparator) {
             $ret = str_replace('/', DIRECTORY_SEPARATOR, $ret);
         }
         
         return $ret;
-    }
-    
-    private static function pathIncluded($path, $selector) {
-        return $selector === null || fnmatch($selector, $path);
     }
 }

@@ -1,157 +1,275 @@
 <?php
 
-            'recursive' => true,
-            'types' => ['f'],
-            'listFilenames' => true,
-            'fileSelector' => '*.php',
+namespace prelude\io;
+
+require_once __DIR__ . '/Files.php';
+require_once __DIR__ . '/../util/Seq.php';
+
+use InvalidArgumentException;
+use prelude\util\Seq;
 
 class PathScanner {
     private $recursive;
-    private $listFilenames;
-    private $fileIncludes;
-    private $fileExcludes;
-    private $dirIncludes;
-    private $dirExcludes;
-    private $linkIncludes;
-    private $linkExcludes;
+    private $listPaths;
+    private $fileIncludeFilter;
+    private $fileExcludeFilter;
+    private $dirIncludeFilter;
+    private $dirExcludeFilter;
+    private $linkIncludeFilter;
+    private $linkExcludeFilter;
 
-    function __construct() {
+    private function __construct() {
+        $defaultFilter = self::createFilter(false);
+        
         $this->recursive = false;
-        $this->listFilenames = false;
-        $this->fileIncludes = false;
-        $this->fileExcludes = false;
-        $this->dirIncludes = false;
-        $this->dirExcludes = false;
-        $this->linkIncludes = false;
-        $this->linkExcludes = false;
+        $this->absolutePaths = false;
+        $this->listPaths = false;
+        $this->fileIncludeFilter = $defaultFilter;
+        $this->fileExcludeFilter = $defaultFilter;
+        $this->dirIncludeFilter = $defaultFilter;
+        $this->dirExcludeFilter = $defaultFilter;
+        $this->linkIncludeFilter = $defaultFilter;
+        $this->linkExcludeFilter = $defaultFilter;
      }
     
     function recursive($recursive = true) {
         if (!is_bool($recursive)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#recursive] First argument $recursive must be boolean');
         }
         
-        $ret = $this->clone();
+        $ret = clone $this;
         $ret->recursive = $recursive;
         return $ret;
     }
 
-    function listFilenames($listFilenames = true) {
-        if (!is_bool($listFilenames)) {
-            throw new IllegalArgumentException(
-                '[PathScanner#listFilenames] First argument $listFilenames must be boolean');
+    function absolutePaths($absolutePaths = true) {
+        if (!is_bool($absolutePaths)) {
+            throw new InvalidArgumentException(
+                '[PathScanner#absolutePaths] First argument $absolutePaths must be boolean');
         }
         
-        $ret = $this->clone();
-        $ret->listFilesnames = $listFilesnames;
+        $ret = clone $this;
+        $ret->absolutePaths = $absolutePaths;
         return $ret;
     }
 
+    function listPaths($listPaths = true) {
+        if (!is_bool($listPaths)) {
+            throw new InvalidArgumentException(
+                '[PathScanner#listPaths] First argument $listPaths must be boolean');
+        }
+        
+        $ret = clone $this;
+        $ret->listPaths = $listPaths;
+        return $ret;
+    }
 
     function includeFiles($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
-            throw new IllegalArgumentException(
+        if (!is_bool($select) && !is_callable($select) && !is_string($select) && !is_array($select)) {
+            throw new InvalidArgumentException(
                 '[PathScanner#includeFiles] First argument $select must '
-                . 'either be boolean or a function or a string');
+                . 'either be boolean or a callable or a string or an array '
+                . 'of strings and/or callables');
         }
 
-        $ret = $this->clone();
-        $ret->includeFiles = $select;
+        $ret = clone $this;
+        $ret->fileIncludeFilter = self::createFilter($select);
         return $ret;
     }
 
     function excludeFiles($select = true) {
         if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#excludeFiles] First argument $select must '
-                . 'either be boolean or a function or a string');
+                . 'either be boolean or a callable or a string or an array '
+                . 'of strings and/or callables');
         }
 
-        $ret = $this->clone();
-        $ret->excludeFiles = $select;
+        $ret = clone $this;
+        $ret->fileExcludeFilter = self::createFilter($select);
         return $ret;
     }
 
     function includeDirs($select = true) {
         if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#includeDirs] First argument $select must '
-                . 'either be boolean or a function or a string');
+                . 'either be boolean or a callable or a string or an array '
+                . 'of strings and/or callables');
         }
 
-        $ret = $this->clone();
-        $ret->includeDirs = $select;
+        $ret = clone $this;
+        $ret->dirIncludeFilter = self::createFilter($select);
         return $ret;
     }
 
     function excludeDirs($select = true) {
         if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#excludeDirs] First argument $select must '
-                . 'either be boolean or a function or a string');
+                . 'either be boolean or a callable or a string or an array '
+                . 'of strings and/or callables');
         }
 
-        $ret = $this->clone();
-        $ret->excludeDirs = $select;
+        $ret = clone $this;
+        $ret->dirExcludeFilter = self::createFilter($select);
         return $ret;
     }
 
     function includeLinks($select = true) {
         if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#includeLinks] First argument $select must '
-                . 'either be boolean or a function or a string');
+                . 'either be boolean or a callable or a string or an array '
+                . 'of strings and/or callables');
         }
 
-        $ret = $this->clone();
-        $ret->includeDirs = $select;
+        $ret = clone $this;
+        $ret->linkIncludeFilter = $select;
         return $ret;
     }
 
     function excludeLinks($select = true) {
         if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#excludeLinks] First argument $select must '
-                . 'either be boolean or a function or a string');
+                . 'either be boolean or a callable or a string or an array '
+                . 'of strings and/or callables');
         }
 
-        $ret = $this->clone();
-        $ret->excludeLinks = $select;
+        $ret = clone $this;
+        $ret->linkExcludeFilter = self::createFilter($select);
         return $ret;
     }
 
     function autoTrim($autoTrim) {
          if (!is_bool($autoTrim)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#recursive] First argument $autoTrim must be boolean');
         }
 
-        $ret = $this->clone();
+        $ret = clone $this; 
         $ret->autoTrim = $autoTrim;
         return $ret;
     }
 
     function scan($dir) {
          if (!is_string($dir) && !($dir instanceof File)) {
-            throw new IllegalArgumentException(
+            throw new InvalidArgumentException(
                 '[PathScanner#scan] First argument $dir must be a string or a File object');
         }
         
+        return new Seq(function () use ($dir) {
+            $parentPath =
+                is_string($dir)
+                ? $dir
+                : $dir->getPath();
+            
+            $items = scandir($parentPath, SCANDIR_SORT_ASCENDING);
+            
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                
+                $path = Files::combinePaths($parentPath, $item);
+                
+                
+                if ($this->absolutePaths && !Files::isAbsolutePath($path)) {
+                    $path = Files::combinePaths(getcwd(), $path);
+                }
+              
+                $file = new File($path);
+                
+                if ($this->fileIsIncluded($file)) {
+                    if ($this->listPaths) {
+                        yield $path;
+                    } else {
+                        yield $file;
+                    }
+                }
+                
+                if ($this->recursive && $file->isDir()) {
+                    $subitems = $this->scan($path);
+                    
+                    foreach ($subitems as $subitem) {
+                        yield $subitem;
+                    }
+                }
+            }
+        });
     }
     
-    private clone() {
-        $ret = new PathScanner();
-
-        $ret->recursive = $this->recursive;
-        $ret->listFileNames = $this->listFileNames
-        $ret->fileIncludes = $this->fileIncludes;
-        $ret->fileExcludes = $this->fileExcludes;
-        $ret->dirIncludes = $this->dirIncludes;
-        $ret->dirExcludes = $this->dirExcludes;
-        $ret->linkIncludes = $this->linkIncludes;
-        $ret->linkExcludes = $this->linkExcludes;
+    static function create() {
+        return new self();
+    }
+    
+    private static function createFilter($select) {
+        $ret = null;
         
-        return ret;
+        if (is_bool($select)) {
+            $ret = function () use ($select) {
+                return $select;
+            };
+        } else if (is_string($select)) {
+            $ret = function ($file) use ($select) {
+                return fnmatch($select, $file->getPath());
+            };
+        } else if (is_callable($select)) {
+            $ret = $select;
+        } else if (is_array($select)) {
+            $ret = function ($file) use ($select) {
+                $result = false;
+                
+                foreach ($select as $constraint) {
+                    if (is_callable($constraint)) {
+                        if ($constraint($file)) {
+                            $result = true;
+                            break;
+                        }
+                    } else if (is_string($constraint)) {
+                        if (fnmatch($constraint, $file->getPath())) {
+                            $result = true;
+                            break;
+                        }       
+                    }
+                }
+                
+                return $result;
+            };
+        } else {
+            throw new Exception("[PathScanner#createFilter] This case should never happen");
+        }
+        
+        return $ret;
+    }
+    
+    private function fileIsIncluded($file) {
+        $ret = false;
+        $isFile = $file->isFile();
+        $isDir = !$isFile && $file->isDir();
+        $isLink = !$isFile && !$isDir && $file->isLink();
+        
+        if ($isFile) {
+            $ret = $this->fileIncludeFilter->__invoke($file)
+                && !$this->fileExcludeFilter->__invoke($file);
+        }
+        
+        if ($isDir) {
+            $ret = $this->dirIncludeFilter->__invoke($file)
+                && !$this->dirExcludeFilter->__invoke($file);
+        }
+        
+        if ($isLink) {
+            if ($ret) {
+                $ret = !$this->linkExcludeFilter->__invoke($file);
+            } else {
+                $ret = $this->linkIncludeFilter->__invoke($file)
+                    && !$this->linkExcludeFilter->__invoke($file);
+            }
+        }
+    
+        return $ret;                        
     }
 }

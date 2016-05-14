@@ -388,12 +388,10 @@ class Seq implements IteratorAggregate {
         return new Seq(function () use ($seq1, $seq2, $fn) {
             $generator1 = null;
             $generator2 = null;
-            $exception = null;
-             
+
             try {
                 $generator1 = $seq1->getIterator();
                 $generator2 = $seq2->getIterator();
-                $idx = -1;
                 
                 while ($generator1->valid() && $generator2->valid()) {
                     $item1 = $generator1->current();
@@ -405,12 +403,54 @@ class Seq implements IteratorAggregate {
                     if ($fn === null) {
                         yield [$item1, $item2];
                     } else {
-                        yield $fn($item1, $item2, ++$idx);
+                        yield $fn($item1, $item2);
                     }
                 }
             } finally {
                 $generator1 = null;
                 $generator2 = null;
+            }
+        });
+    }
+
+    static function zipMany($iterable, callable $fn = null) {
+        $iterables =
+            is_array($iterable)
+            ? $iterable
+            : Seq::from($iterable)->toArray();
+        
+        return new Seq(function () use ($iterables, $fn) {
+            $iterators = [];
+            
+            try {
+                foreach ($iterables as $iterable) {
+                    $iterators[] = Seq::from($iterable)->getIterator();
+                }
+                
+                $idx = -1;
+                
+                while (true) {
+                    foreach ($iterators as $iterator) {
+                        if (!$iterator->valid()) {
+                             break(2);
+                        }
+                    }
+
+                    $items = [];                    
+                    
+                    foreach ($iterators as $iterator) {
+                        $items[] = $iterator->current();
+                        $iterator->next();
+                    }                
+                    
+                    if ($fn === null) {
+                        yield $items;
+                    } else {
+                        yield call_user_func_array($fn, $items);
+                    }
+                }
+            } finally {
+                $iterators = null;
             }
         });
     }

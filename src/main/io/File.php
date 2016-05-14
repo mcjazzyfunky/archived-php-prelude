@@ -35,4 +35,8 @@ class File {
     function getPath() {
         return $this->path;
     }
+    
+    function isAbsolute() {
+        return Files::isAbsolutePath($this->path);
+    }
 }

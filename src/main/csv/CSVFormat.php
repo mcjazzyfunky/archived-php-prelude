@@ -28,7 +28,7 @@ class CSVFormat {
         return $ret;
     }
     
-    private clone() {
+    private function copy() {
         $ret = new CSVFormat();
         $ret->columns = $this->columns;
         $ret->delimiter = $this->delimiter;
