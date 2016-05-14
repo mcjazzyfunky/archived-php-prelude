@@ -66,7 +66,7 @@ class PathScanner {
     }
 
     function includeFiles($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select) && !is_array($select)) {
+        if (!self::isValidSelectArgument($select)) {
             throw new InvalidArgumentException(
                 '[PathScanner#includeFiles] First argument $select must '
                 . 'either be boolean or a callable or a string or an array '
@@ -79,7 +79,7 @@ class PathScanner {
     }
 
     function excludeFiles($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
+        if (!self::isValidSelectArgument($select)) {
             throw new InvalidArgumentException(
                 '[PathScanner#excludeFiles] First argument $select must '
                 . 'either be boolean or a callable or a string or an array '
@@ -92,7 +92,7 @@ class PathScanner {
     }
 
     function includeDirs($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
+        if (!self::isValidSelectArgument($select)) {
             throw new InvalidArgumentException(
                 '[PathScanner#includeDirs] First argument $select must '
                 . 'either be boolean or a callable or a string or an array '
@@ -105,7 +105,7 @@ class PathScanner {
     }
 
     function excludeDirs($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
+        if (!self::isValidSelectArgument($select)) {
             throw new InvalidArgumentException(
                 '[PathScanner#excludeDirs] First argument $select must '
                 . 'either be boolean or a callable or a string or an array '
@@ -118,7 +118,7 @@ class PathScanner {
     }
 
     function includeLinks($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
+        if (!self::isValidSelectArgument($select)) {
             throw new InvalidArgumentException(
                 '[PathScanner#includeLinks] First argument $select must '
                 . 'either be boolean or a callable or a string or an array '
@@ -131,7 +131,7 @@ class PathScanner {
     }
 
     function excludeLinks($select = true) {
-        if (!is_bool($select) && !is_callable($select) && !is_string($select)) {
+        if (!self::isValidSelectArgument($select)) {
             throw new InvalidArgumentException(
                 '[PathScanner#excludeLinks] First argument $select must '
                 . 'either be boolean or a callable or a string or an array '
@@ -203,6 +203,29 @@ class PathScanner {
     
     static function create() {
         return new self();
+    }
+    
+    private static function isValidSelectArgument($select) {
+        $ret = false;
+        
+        if (is_bool($select)) {
+            $ret = true;
+        } else if (is_string($select)) {
+            $ret = true;
+        } else if (is_callable($select)) {
+            $ret = true;
+        } else if (is_array($select)) {
+            $ret = true;
+            
+            foreach ($select as $constraint) {
+                if (!is_string($constraint) && !is_callable($constraint)) {
+                    $ret = false;
+                    break;
+                }
+            }
+        }
+        
+        return $ret;
     }
     
     private static function createFilter($select) {
