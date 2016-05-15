@@ -18,13 +18,10 @@ class TextWriterTest extends \PHPUnit_Framework_TestCase {
             
         $this->assertEquals(file_get_contents($filename), 'This is a test');
         
-        $a = "abc";
+        $s = '';
         
-        TextWriter::fromString($a)->writeFull('Juhuuu');
-        print_r($a);
-        flush();
-        exit();
-        
+        TextWriter::fromString($s)->writeFull("line1\nline2");
+        $this->assertEquals($s, "line1\nline2");
     }
     
     function testMethodWriteLines() {

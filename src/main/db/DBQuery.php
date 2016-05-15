@@ -26,19 +26,19 @@ class DBQuery {
     }
     
     function bind($params) {
-        $ret = $this->copy();
+        $ret = clone $this;
         $ret->bindings = $params;
         return $ret;
     }
     
     function limit($n) {
-        $ret = $this->copy();
+        $ret = clone $this;
         $ret->limit = $n;
         return $ret;
     }
 
     function offset($n) {
-        $ret = $this->copy();
+        $ret = clone $this;
         $ret->offset = $n;
         return $ret;
     }
@@ -109,75 +109,16 @@ class DBQuery {
     }
     
     function fetchSeqOfRecs() {
-        $qry = self::limitQueryByLimitClause($this->query, $this->limit, $this->offset);
-        $bindings = $this->bindings;
-        
-        return new Seq(function () use ($qry, $bindings) {
-            $conn = $this->db->getConnection();
-            $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
-            
-            if ($stmt === false) {
-                $errorInfo = $conn->errorInfo();
-                throw new DBException($errorInfo[2]);
-            }
-            
-            try {
-                $result = $stmt->execute($bindings);
-            
-                while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    yield $rec;
-                }
-                
-                $errorInfo = $stmt->errorInfo();
-                
-                if (0 + $errorInfo[0] !== 0) {
-                    throw new DBException($errorInfo[2]); 
-                }
-            } finally {
-                $stmt->closeCursor();
-            }
-        });
-        
+        return $this->db->fetch(
+            $this->query,
+            $this->bindings,
+            $this->limit,
+            $this->offset);
     }
     
     function fetchSeqOfVOs() {
         return $this->fetchSeqOfRecs()->map(function ($rec) {
             return new ValueObject($rec);
         });
-    }
-    
-    private function copy() {
-        return new DBQuery(
-            $this->db,
-            $this->query,
-            $this->bindings,
-            $this->limit,
-            $this->offset);
-    }
-
-    // TODO: This is currently only working if DBMS supports limit and offset clauses
-    private static function limitQueryByLimitClause($qry, $limit, $offset) {
-        $ret = $qry;
-        
-        if ($limit !== null || $offset > 0) {
-            if ($limit === null) {
-                // TODO
-                $limit = "2000000000";
-            } elseif ($limit <= 0) {
-                $limit = 0;
-            }
-      
-            $offset = max(0, (int)$offset);
-      
-            $qryLower = strtolower($qry);
-      
-            if (strpos($qryLower, 'limit') === false && strpos($qryLower, 'union') === false) {
-                $ret = "$qry\nlimit $limit offset $offset";
-            } else {
-                $ret = "select ___.*\nfrom(\n$qry\n) as ___\nlimit $limit offset $offset";
-            }
-        }
-
-        return $ret;
     }
 }

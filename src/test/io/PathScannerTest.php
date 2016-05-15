@@ -13,8 +13,9 @@ class PathScannerTest extends PHPUnit_Framework_TestCase {
         $arr =
             PathScanner::create()
                 ->recursive()
-                ->includeFiles(['*.php', '*.json'])
-                ->excludeFiles('*Test*')
+                ->includeFiles(['*.php', '*.js', '*.css'])
+                ->excludeFiles('*tmp*')
+                ->excludeLinks()
                 ->absolutePaths()
                 ->listPaths()
                 ->scan('.')

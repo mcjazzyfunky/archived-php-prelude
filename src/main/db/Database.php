@@ -4,6 +4,7 @@ namespace prelude\db;
 
 require_once __DIR__ . '/DBException.php';
 require_once __DIR__ . '/DBQuery.php';
+require_once __DIR__ . '/DBMultiQuery.php';
 require_once __DIR__ . '/../util/ValueObject.php';
 require_once __DIR__ . '/../util/Seq.php';
 
@@ -19,7 +20,6 @@ class Database {
     private $password;
     private $options;
     private $connection;
-    
     private static $registeredDBs = [];
     
     function __construct($dsn, $username = null, $password = null, array $options = null) {
@@ -30,19 +30,19 @@ class Database {
         $this->connection = null;
     }
     
-    function fetchDsn() {
+    function getDsn() {
         return $this->dsn;
     }
     
-    function fetchUsername() {
+    function getUsername() {
         return $this->username;
     }
     
-    function fetchPassword() {
+    function getPassword() {
         return $this->password;
     }
     
-    function fetchOptions() {
+    function getOptions() {
         return $this->options;
     }
     
@@ -50,42 +50,57 @@ class Database {
         return new DBQuery($this, $query, $bindings, $limit, $offset);
     }
     
-    function execute($query, $bindings = null) {
-        $this->fetchSeqOfRecs($query, $bindings)
-            ->take(1)
-            ->force();
+    function multiQuery($query, $bindings = null) {
+        return new DBMultiQuery($this, $query, $bindings);
     }
     
-    function fetchSingle($query, $bindings = null, $offset = 0) {
-        return @$this->fetchRow($query, $bindings, 1, $offset)[0];
+    function runTransaction(callable $transaction) {
+        $conn = $this->getConnection();
+        
+        $conn->beginTransaction();
+        
+        try {
+            $result = $transaction($this);
+        
+            if ($result === false) {
+                $conn->rollBack();
+            } else {
+                $conn->commit();
+            }
+        } catch (throwable $t) {
+            $conn->rollBack();
+            throw $t;
+        }
     }
     
-    function fetchRow($query, $bindings = null, $limit = null, $offset = 0) {
-        return @$this->fetchRows($query, $bindings, $limit, $offset)[0];
-    }
+    function process($query, Seq $bindings = null, $limit = null, $offset = 0) {
+        $qry = self::limitQueryByLimitClause($query, $limit, $offset);
+        
+        $conn = $this->getConnection();
+        $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
     
-    function fetchRows($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfRows($query, $bindings, $limit, $offset)
-            ->toArray(); 
-    }
-    
-    function fetchSeqOfRows($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfRecs($query, $bindings, $limit, $offset)
-            ->map(function ($rec) {
-                return array_values($rec);
-            });
-    }
+        if ($stmt === false) {
+            $errorInfo = $conn->errorInfo();
+            throw new DBException($errorInfo[2]);
+        }
 
-    function fetchRec($query, $bindings = null, $offset = 0) {
-        return @$this->fetchRecs($query, $bindings, $limit, $offset)[0];
+        try {
+            foreach ($bindings as $binding) {
+                $result = $stmt->execute($binding);
+            }
+        
+            // TODO
+            /*
+            while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                //...
+            }
+            */
+        } finally {
+            $stmt->closeCursor();
+        }
     }
     
-    function fetchRecs($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfRecs($query, $bindings, $limit, $offset)
-            ->toArray(); 
-    }
-    
-    function fetchSeqOfRecs($query, $bindings = null, $limit = null, $offset = 0) {
+    function fetch($query, $bindings = null, $limit = null, $offset = 0) {
         $qry = self::limitQueryByLimitClause($query, $limit, $offset);
         
         return new Seq(function () use ($qry, $bindings) {
@@ -113,46 +128,6 @@ class Database {
                 $stmt->closeCursor();
             }
         });
-    }
-    
-    function fetchVO($query, $bindings = null, $limit = null, $offset = 0) {
-        return @$this->fetchVOs($query, $bindings, $limit, $offset)[0];
-    }
-    
-    function fetchVOs($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfVOs($query, $bindings, $limit, $offset)
-            ->toArray(); 
-    }
-    
-    function fetchSeqOfVOs($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfRecs($query, $bindings, $limit, $offset)
-            ->map(function ($rec) {
-                return new ValueObject($rec);
-            });
-    }
-
-    function fetchSingles($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfSingles($query, $bindings, $limit, $offset)
-            ->toArray();
-    }
-
-    function fetchSeqOfSingles($query, $bindings = null, $limit = null, $offset = 0) {
-        return $this->fetchSeqOfRows($query, $bindings, $limit, $offset)
-            ->map(function ($row) {
-                return @$row[0];
-            });
-    }
-
-    function fetchMap($query, $binings = null, $limit = null, $offset = 0) {
-        $ret = [];
-        
-        $rows = $this->fetchSeqOfRows($query, $bindings, $limit, $offset);
-        
-        foreach ($seq as $row) {
-            $ret[@$row[0]] = @$row[1];
-        }
-            
-        return $ret;
     }
     
     // --- public static methods ------------------------------------
@@ -185,7 +160,7 @@ class Database {
 
     // --- private methods ------------------------------------------
     
-    function getConnection() {
+    private function getConnection() {
         $ret = $this->connection;
         
         if ($ret === null) {
@@ -210,6 +185,7 @@ class Database {
     
     // TODO: This is currently only working if DBMS supports limit and offset clauses
     private static function limitQueryByLimitClause($qry, $limit, $offset) {
+        $qry = trim($qry);
         $ret = $qry;
         
         if ($limit !== null || $offset > 0) {

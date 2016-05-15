@@ -4,6 +4,7 @@ namespace prelude\util;
 
 use ArrayAccess;
 use Countable;
+use InvalidArgumentException;
 
 class ValueObject implements ArrayAccess, Countable {
     protected static $propInfoByName = array();
@@ -24,7 +25,7 @@ class ValueObject implements ArrayAccess, Countable {
         $propInfo = @self::$propInfoByName[$id];
 
         if ($propInfo === null) {
-            throw new IllegalArgumentException("[ValueObject#__get] Tried to read unknown property '$propName'!");
+            throw new InvalidArgumentException("[ValueObject#__get] Tried to read unknown property '$propName'!");
         }
 
         $ret = $this->propMap[$propInfo[0]];
