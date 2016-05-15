@@ -50,12 +50,16 @@ class Database {
         return new DBQuery($this, $query, $bindings, $limit, $offset);
     }
     
-    function multiQuery($query, $bindings = null) {
-        return new DBMultiQuery($this, $query, $bindings);
+    function multiQuery($query, $bindings = null, $forceTransaction = false) {
+        return new DBMultiQuery($this, $query, $bindings, $forceTransaction);
     }
     
     function runTransaction(callable $transaction) {
         $conn = $this->getConnection();
+        
+        if ($conn->inTransaction()) {
+            throw new DBException("Illegaly tried to start nexted transaction");
+        }
         
         $conn->beginTransaction();
         
@@ -73,30 +77,38 @@ class Database {
         }
     }
     
-    function process($query, Seq $bindings = null, $limit = null, $offset = 0) {
-        $qry = self::limitQueryByLimitClause($query, $limit, $offset);
-        
+    function process($query, Seq $bindings = null, $forceTransaction = false) {
+        $qry = trim($query);
         $conn = $this->getConnection();
-        $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
     
-        if ($stmt === false) {
-            $errorInfo = $conn->errorInfo();
-            throw new DBException($errorInfo[2]);
-        }
-
-        try {
-            foreach ($bindings as $binding) {
-                $result = $stmt->execute($binding);
-            }
+        $process = function () use ($qry, $bindings, $conn) {
+            $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
         
-            // TODO
-            /*
-            while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                //...
+            if ($stmt === false) {
+                $errorInfo = $conn->errorInfo();
+                throw new DBException($errorInfo[2]);
             }
-            */
-        } finally {
-            $stmt->closeCursor();
+    
+            try {
+                foreach ($bindings as $binding) {
+                    $result = $stmt->execute($binding);
+                }
+            
+                // TODO
+                /*
+                while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    //...
+                }
+                */
+            } finally {
+                $stmt->closeCursor();
+            }
+        };
+        
+        if ($forceTransaction && !$conn->inTransaction()) {
+            $this->runTransaction($process);
+        } else {
+            $process();
         }
     }
     
