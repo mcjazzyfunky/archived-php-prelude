@@ -10,40 +10,10 @@ use PDO;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 
-class DBMultiQuery {
-    private $db;
-    private $query;
-    private $bindings;
-    private $forceTransaction;
-
-    function __construct(
-        Database $db,
-        $query,
-        Seq $bindings = null,
-        $forceTransaction = false) {
-        
-        $this->db = $db;
-        $this->query = $query;
-        $this->bindings = $bindings;
-        $this->forceTransaction = $forceTransaction;
-    }
+interface DBMultiQuery {
+    function bindMany($bindings);
     
-    function bindMany($bindings) {
-        $ret = clone $this;
-        $ret->bindings = Seq::from($bindings);
-        return $ret;
-    }
+    function forceTransaction($forceTransaction);
 
-    function forceTransaction($forceTransaction) {
-        $ret = clone $this;
-        $ret->forceTransaction = $forceTransaction;
-        return $ret;
-    }
-
-    function process() {
-        return $this->db->process(
-            $this->query,
-            $this->bindings,
-            $this->forceTransaction);
-    }
+    function process();
 }

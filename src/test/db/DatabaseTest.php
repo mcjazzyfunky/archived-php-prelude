@@ -2,7 +2,7 @@
 
 namespace prelude\db;
 
-require_once __DIR__ . '/../../main/db/Database.php';
+require_once __DIR__ . '/../../main/db/DBManager.php';
 
 use PHPUnit_Framework_TestCase;
 
@@ -10,10 +10,9 @@ error_reporting(E_ALL);
 
 class DatabaseTest extends PHPUnit_Framework_TestCase {
     function testRun() {
-        Database::registerDB('shop', new Database('sqlite::memory:'));
+        // The registry pattern is not really the coolest :-(
+        DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
         
-        $shopDB = Database::getDB('shop');
-    
         $newUsers = [[
             'id' => 1001,
             'firstName' => 'John',
@@ -29,6 +28,7 @@ class DatabaseTest extends PHPUnit_Framework_TestCase {
             'country' => 'USA',
             'type' => 1
         ], [
+            
             'id' => 1003,
             'firstName' => 'Johnny',
             'lastName' => 'Chopper',
@@ -44,7 +44,7 @@ class DatabaseTest extends PHPUnit_Framework_TestCase {
             'type' => 2
         ]]; 
 
-        $shopDB = Database::getDB('shop');
+        $shopDB = DBManager::getDB('shop');
 
         $shopDB
             ->query('

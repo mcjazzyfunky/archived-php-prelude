@@ -10,115 +10,36 @@ use PDO;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 
-class DBQuery {
-    private $db;
-    private $query;
-    private $bindings;
-    private $limit;
-    private $offset;
-    
-    function __construct(Database $db, $query, $bindings = null, $limit = null, $offset = null) {
-        $this->db = $db;
-        $this->query = $query;
-        $this->bindings = $bindings;
-        $this->limit = $limit;
-        $this->offset = $offset;
-    }
-    
-    function bind($params) {
-        $ret = clone $this;
-        $ret->bindings = $params;
-        return $ret;
-    }
-    
-    function limit($n) {
-        $ret = clone $this;
-        $ret->limit = $n;
-        return $ret;
-    }
+interface DBQuery {
+    function bind($params);
 
-    function offset($n) {
-        $ret = clone $this;
-        $ret->offset = $n;
-        return $ret;
-    }
-    
-    function execute() {
-        $this->fetchRec();
-    }
-    
-    function fetchSingle() {
-        $row = $this->fetchRow();
-    
-        return $row === null ? null : $row[0];
-    }
-    
-    function fetchRow() {
-        $rec = $this->fetchRec();
-    
-        return $rec = null ? null : array_values($rec);
-    }
-    
-    function fetchRec() {
-        $arr =
-            $this->fetchSeqOfRecs()
-                ->take(1)
-                ->toArray();
-        
-        return count($arr) === 0 ? null : $arr[0];
-    }
-    
-    function fetchVO() {
-        $rec = $this->fetchRec();
-    
-        return $rec === null ? $rec : new ValueObject($rec);
-    }
-    
-    function fetchSingles() {
-        return $this->fetchSeqOfSingles()->toArray();
-    }
-    
-    function fetchRows() {
-        return $this->fetchSeqOfRows()->toArray();
-    }
-    
-    function fetchRecs() {
-        return $this->fetchSeqOfRecs()->toArray();
-    }
-    
-    function fetchMap() {
-        $ret = [];
-        
-        foreach ($this->fetchSeqOfRows() as $row) {
-            $ret[$row[0]] = @$row[1];
-        }
-        
-        return $ret;
-    }
-    
-    function fetchSeqOfSingles() {
-        return $this->fetchRows()->map(function ($row) {
-            return $row[0]; 
-        });
-    }
-    
-    function fetchSeqOfRows() {
-        return $this->fetchRecs()->map(function ($rec) {
-            return array_values($rec); 
-        });
-    }
-    
-    function fetchSeqOfRecs() {
-        return $this->db->fetch(
-            $this->query,
-            $this->bindings,
-            $this->limit,
-            $this->offset);
-    }
-    
-    function fetchSeqOfVOs() {
-        return $this->fetchSeqOfRecs()->map(function ($rec) {
-            return new ValueObject($rec);
-        });
-    }
+    function limit($n);
+
+    function offset($n);
+
+    function execute();
+
+    function fetchSingle();
+
+    function fetchRow();
+
+    function fetchRec();
+
+    function fetchVO();
+
+    function fetchSingles();
+
+    function fetchRows();
+
+    function fetchRecs();
+
+    function fetchMap();
+
+    function fetchSeqOfSingles();
+
+    function fetchSeqOfRows();
+
+    function fetchSeqOfRecs();
+
+    function fetchSeqOfVOs();
 }
