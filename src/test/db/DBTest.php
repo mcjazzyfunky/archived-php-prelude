@@ -21,8 +21,8 @@ class DBTest extends PHPUnit_Framework_TestCase {
     private $log;
     
     function __construct() {
-        // normally it's better to pass the log as constructor argument
-        $this->log = Logger::getLog($this);
+        // maybe it's better to pass the log as constructor argument
+        $this->log = Logger::getLog(__CLASS__);
     }
     
     function testRun() {

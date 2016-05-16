@@ -14,8 +14,9 @@ use prelude\log\LogUtils;
 class StreamLog extends AbstractLog {
     private $stream;
 
-    function __construct($stream) {
+    function __construct($stream, $domain) {
         $this->stream = $stream;
+        $this->domain = $domain;
     }
     
     function log($level, $message, $args = null, $ctx = null) {
@@ -29,8 +30,9 @@ class StreamLog extends AbstractLog {
             $date = date ('Y-m-d H:i:s');
             $levelName = LogUtils::getLogLevelName($level);
             $text = LogUtils::formatLogMessage($message, $args); 
-    
-            $output = "[$date] [$levelName] $text\n";
+            $domain = $this->domain;
+            $output = "[$date] [$levelName] [$domain] $text\n";
+            
             fputs($this->stream, $output);
             fflush($this->stream);
         }

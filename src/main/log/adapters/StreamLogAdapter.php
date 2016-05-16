@@ -9,13 +9,21 @@ use prelude\log\LogAdapter;
 use prelude\log\adapters\internal\StreamLog;
 
 class StreamLogAdapter implements LogAdapter {
-    private $log;
+    private $logs;
 
     function __construct($stream) {
-        $this->log = new StreamLog($stream);
+        $this->stream = $stream;
+        $this->log = [];
     }
     
     function getLog($domain) {
-        return $this->log;        
+        $ret = @$this->logs[$domain];
+        
+        if ($log === null) {
+            $ret = new StreamLog($this->stream, $domain);
+            $this->logs[$domain] = $ret;
+        }
+        
+        return $ret;
     }
 }
