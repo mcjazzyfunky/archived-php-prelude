@@ -21,5 +21,9 @@ interface DB {
     
     function multiQuery($query, $bindings = null, $forceTransaction = false);
     
+    function runIsolated(callable $action);
+
     function runTransaction(callable $transaction);
+
+    function runIsolatedTransaction(callable $transaction);
 }

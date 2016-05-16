@@ -27,7 +27,8 @@ class DBTest extends PHPUnit_Framework_TestCase {
     
     function testRun() {
         // The registry pattern is not really the coolest :-(
-        DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
+       // DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
+        DBManager::registerDB('shop', ['dsn' => 'mysql:host=localhost;dbname=test', 'username' => 'root']);
         
         $newUsers = [[
             'id' => 1001,
@@ -63,13 +64,17 @@ class DBTest extends PHPUnit_Framework_TestCase {
         $shopDB = DBManager::getDB('shop');
 
         $shopDB
+            ->query('drop table if exists user')
+            ->execute();
+
+        $shopDB
             ->query('
                 create table user
-                (id primary key, firstName, lastName, city, country, type)
+                (id integer primary key, firstName varchar(20), lastName varchar(20), city varchar(20), country varchar(20), type integer)
             ')
             ->execute();
        
-        $shopDB->runTransaction(function () use ($shopDB, $newUsers) {
+       $shopDB->runTransaction(function () use ($shopDB, $newUsers) {
             $shopDB
                 ->query('delete from user')
                 ->execute();

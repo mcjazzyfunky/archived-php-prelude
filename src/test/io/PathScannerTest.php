@@ -16,7 +16,7 @@ class PathScannerTest extends PHPUnit_Framework_TestCase {
                 ->includeFiles(['*.php', '*.json'])
                 ->excludeFiles('*tmp*')
                 ->excludeLinks()
-                ->absolutePaths()
+                ->forceAbsolute()
                 ->listPaths()
                 ->scan('.')
                 ->toArray();

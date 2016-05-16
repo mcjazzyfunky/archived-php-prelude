@@ -10,9 +10,11 @@ use UnexpectedValueException;
 
 class Seq implements IteratorAggregate {
     private $generatorFunction;
+    private $args;
     
-    function __construct(Closure $generatorFunction) {
+    function __construct(Closure $generatorFunction, array $args = null) {
         $this->generatorFunction = $generatorFunction;
+        $this->args = $args;
     }
     
     function filter(callable $pred) {
@@ -27,6 +29,18 @@ class Seq implements IteratorAggregate {
         });
     }
     
+    function reject(callable $pred) {
+        return $this->filter(function ($item, $idx) {
+            return !$pred($item, $idx);
+        });
+    }
+    
+    function rejectNull() {
+        return $this->filter(function ($item) {
+            return $item !== null;
+        });
+    }
+
     function map(callable $fn) {
         return new Seq(function () use ($fn) {
             $idx = -1;
@@ -132,6 +146,30 @@ class Seq implements IteratorAggregate {
     
     function appendMany($items) {
         return Seq::concat($this, $items);
+    }
+    
+    function sort($order = null) {
+        if ($order !== null && !is_integer($order) && !is_callable($order)) {
+            throw new InvalidArgumentException(
+                '[Seq#sort] First argument $order must either be an integer '
+                . 'or a callabel or null');
+        }
+        
+        return new Seq(function () use ($order) {
+            $arr = $this->toArray();
+            
+            if ($order = null) {
+                sort($arr);
+            } else if (is_integer($order)) {
+                sort($arr, $order);
+            } else {
+                usort($arr, $orr);
+            }
+            
+            foreach ($arr as $item) {
+                yield $item;
+            }
+        });
     }
     
     function peek(callable $action) {
@@ -256,7 +294,12 @@ class Seq implements IteratorAggregate {
     
     function getIterator() {
         $generatorFunction = $this->generatorFunction;
-        $ret = $generatorFunction();
+        
+        if ($this->args === null) {
+            $ret = $generatorFunction();
+        } else {
+            $ret = call_user_func_array($generatorFunction, $this->args);
+        }
         
         if (!($ret instanceof Generator)) {
             throw new UnexpectedValueException(

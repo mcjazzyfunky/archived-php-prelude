@@ -22,7 +22,7 @@ class PathScanner {
         $defaultFilter = self::createFilter(false);
         
         $this->recursive = false;
-        $this->absolutePaths = false;
+        $this->forceAbsolute = false;
         $this->listPaths = false;
         $this->fileIncludeFilter = $defaultFilter;
         $this->fileExcludeFilter = $defaultFilter;
@@ -43,14 +43,14 @@ class PathScanner {
         return $ret;
     }
 
-    function absolutePaths($absolutePaths = true) {
-        if (!is_bool($absolutePaths)) {
+    function forceAbsolute($forceAbsolute = true) {
+        if (!is_bool($forceAbsolute)) {
             throw new InvalidArgumentException(
-                '[PathScanner#absolutePaths] First argument $absolutePaths must be boolean');
+                '[PathScanner#forceAbsolute] First argument $forceAbsolute must be boolean');
         }
         
         $ret = clone $this;
-        $ret->absolutePaths = $absolutePaths;
+        $ret->forceAbsolute = $forceAbsolute;
         return $ret;
     }
 
@@ -154,19 +154,22 @@ class PathScanner {
         return $ret;
     }
 
-    function scan($dir) {
+    function scan($dir, $context = null) {
          if (!is_string($dir) && !($dir instanceof File)) {
             throw new InvalidArgumentException(
                 '[PathScanner#scan] First argument $dir must be a string or a File object');
         }
         
-        return new Seq(function () use ($dir) {
+        return new Seq(function () use ($dir, $context) {
             $parentPath =
                 is_string($dir)
                 ? $dir
                 : $dir->getPath();
             
-            $items = scandir($parentPath, SCANDIR_SORT_ASCENDING);
+            $items =
+                $context === null
+                ? scandir($parentPath, SCANDIR_SORT_ASCENDING)
+                : scandir($parentPath, SCANDIR_SORT_ASCENDING, $context);
             
             foreach ($items as $item) {
                 if ($item === '.' || $item === '..') {
@@ -176,7 +179,7 @@ class PathScanner {
                 $path = Files::combinePaths($parentPath, $item);
                 
                 
-                if ($this->absolutePaths && !Files::isAbsolutePath($path)) {
+                if ($this->forceAbsolute && !Files::isAbsolutePath($path)) {
                     $path = Files::combinePaths(getcwd(), $path);
                 }
               

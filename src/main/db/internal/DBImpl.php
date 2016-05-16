@@ -18,7 +18,7 @@ use prelude\db\DB;
 use prelude\db\DBException;
 use prelude\db\DBQuery;
 use prelude\db\internal\adapters\PDOSQLiteAdapter;
-use prelude\db\internal\adaptes\PDOMySQAdapter;
+use prelude\db\internal\adapters\PDOMySQLAdapter;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 
@@ -55,6 +55,16 @@ class DBImpl implements DB {
     
     function runTransaction(callable $transaction) {
         $this->adapter->runTransaction($transaction);
+    }
+    
+    function runIsolated(callable $action) {
+        $this->adapter->runIsolated($action);
+    }
+    
+    function runIsolatedTransaction(callable $transaction) {
+        $this->adapter->runIsolated(function () use ($transaction) {
+            $this->runTransaction($transaction); 
+        });
     }
 }
 

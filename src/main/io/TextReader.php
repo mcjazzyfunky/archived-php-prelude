@@ -104,6 +104,38 @@ class TextReader {
         return $ret;
     }
     
+    function process(callable $action) {
+        $filename = $this->filename;
+        $context = $this->context;
+        
+        $fhandle =
+            $context === null
+            ? @fopen(
+                $filename,
+                'rb',
+                false)
+            : @fopen(
+                $filename,
+                'rb',
+                false,
+                $context);
+        
+        if ($fhandle === false) {
+            $message = error_get_last()['message'];
+            throw new IOException($message);
+        }
+        
+        try {
+            $action($fhandle);
+            
+            new Seq(function () use ($action, $fhandle) {
+                 
+            });
+        } finally {
+            @fclose($fhandle);
+        }
+    }
+    
     static function fromFile($file, array $context = null) {
          if (!is_string($file) && !($file instanceof File)) {
             throw new InvalidArgumentException(

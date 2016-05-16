@@ -7,8 +7,6 @@ use Countable;
 use InvalidArgumentException;
 
 class ValueObject implements ArrayAccess, Countable {
-    protected static $propInfoByName = array();
-    protected static $propInfoByIdx = array();
     protected $propMap = array();
 
     function __construct($props = null) {
@@ -20,60 +18,34 @@ class ValueObject implements ArrayAccess, Countable {
     }
 
     public function __get($propName) {
-        $ret = null;
-        $id = mb_strtolower(str_replace('_', '', $propName));
-        $propInfo = @self::$propInfoByName[$id];
-
-        if ($propInfo === null) {
-            throw new InvalidArgumentException("[ValueObject#__get] Tried to read unknown property '$propName'!");
+        if (!is_string($propName)) {
+            throw new InvalidArgumentException(
+                '[ValueObject#__get] First argument $propName must be a string');
+        }
+        
+        if (!array_key_exists($propName, $this->propMap)) {
+            throw new InvalidArgumentException(
+                "[ValueObject#__get] Tried to read unknown property '$propName'");
         }
 
-        $ret = $this->propMap[$propInfo[0]];
-        return $ret;
+        return $this->propMap[$propName];
     }
 
     public function __set($propName, $value) {
-        $propNameLowerCase = mb_strtolower($propName);
-        $id = str_replace('_', '', $propNameLowerCase);
-        $info = @self::$propInfoByName[$id];
-
-        if ($info === null) {
-            $propNameCamelCase = $propName;
-
-            if (strpos($propName, '_') !== false) {
-                    $propNameCamelCase = implode('', array_map('ucfirst', explode('_', $propNameLowerCase)));
-            }
-
-            $nameCamelCase = mb_strtolower($propNameCamelCase{0}) . mb_substr($propNameCamelCase, 1);
-            $idx = count(self::$propInfoByIdx);
-            $info = array($idx, $nameCamelCase);
-            self::$propInfoByName[$id] = &$info;
-            self::$propInfoByName[mb_strtoupper($id)] = &$info;
-            self::$propInfoByName[$propName] = &$info;
-            self::$propInfoByName[$propNameLowerCase] = &$info;
-            self::$propInfoByName[mb_strtoupper($propName)] = &$info;
-            self::$propInfoByName[$propNameCamelCase] = &$info;
-            self::$propInfoByIdx[] = &$info;
+        if (!is_string($propName)) {
+            throw new InvalidArgumentException(
+                '[ValueObject#__set] First argument $propName must be a string');
         }
-
-        $ref =& $this->propMap[$info[0]];
-        $ref = $value;
+        
+        $this->propMap[$propName] = $value;
     }
 
     function toArray() {
-        $ret = array();
-
-        foreach ($this->propMap as $idx => $v) {
-            $propInfo = self::$propInfoByIdx[$idx];
-            $ret[$propInfo[1]] = $this->propMap[$idx];
-        }
-
-        return $ret;
+        return $this->propMap();
     }
 
     public function offsetExists($propName) {
-        $ret = isset($this->propMap[@self::$propInfoByName[strtolower($propName)][0]]);
-        return $ret;
+        return array_key_exists($this->propMap, $propName);
     }
 
     public function offsetGet($propName) {
@@ -86,11 +58,7 @@ class ValueObject implements ArrayAccess, Countable {
     }
 
     public function offsetUnset($propName) {
-        $idx = @self::$propInfoByName[$propName][0];
-
-        if ($idx !== null) {
-            unset($this->propMap[$idx]);
-        }
+        unset($this->propMap[$propName]);
     }
 
     public function count() {

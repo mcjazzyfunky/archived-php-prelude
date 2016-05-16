@@ -8,6 +8,7 @@ require_once __DIR__ . '/../DBException.php';
 require_once __DIR__ . '/../../util/Seq.php';
 
 use PDO;
+use PDOException;
 use prelude\db\DBException;
 use prelude\db\internal\DBAdapter;
 use prelude\util\Seq;
@@ -15,10 +16,12 @@ use prelude\util\Seq;
 abstract class AbstractPDOAdapter implements DBAdapter {
     private $dbParams;
     private $connection;
+    private $isolatedConnection;
     
     public function __construct($dbParams) {
         $this->dbParams = $dbParams;
         $this->connection = null;
+        $this->isolatedConnection = null;
     }
     
     abstract protected function limitQuery($query, $limit = null, $offset = 0);
@@ -29,14 +32,9 @@ abstract class AbstractPDOAdapter implements DBAdapter {
         $conn = $this->getConnection();
     
         $process = function () use ($qry, $bindings, $conn, &$ret) {
-            $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
-        
-            if ($stmt === false) {
-                $errorInfo = $conn->errorInfo();
-                throw new DBException($errorInfo[2]);
-            }
-    
             try {
+                $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
+                
                 foreach ($bindings as $binding) {
                     $result = $stmt->execute($binding);
                     ++$ret;
@@ -48,6 +46,8 @@ abstract class AbstractPDOAdapter implements DBAdapter {
                     //...
                 }
                 */
+            } catch (PDOException $e) {
+                throw new DBExcetion($e->getMessage(), $e->getCode(), $e);
             } finally {
                 $stmt->closeCursor();
             }
@@ -66,26 +66,17 @@ abstract class AbstractPDOAdapter implements DBAdapter {
         $qry = $this->limitQuery($query, $limit, $offset);
         
         return new Seq(function () use ($qry, $bindings) {
-            $conn = $this->getConnection();
-            $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
-            
-            if ($stmt === false) {
-                $errorInfo = $conn->errorInfo();
-                throw new DBException($errorInfo[2]);
-            }
-            
             try {
-                $result = $stmt->execute($bindings);
+                $conn = $this->getConnection();
+                $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
             
+                $result = $stmt->execute($bindings);
+
                 while ($rec = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     yield $rec;
                 }
-                
-                $errorInfo = $stmt->errorInfo();
-                
-                if (0 + $errorInfo[0] !== 0) {
-                    throw new DBException($errorInfo[2]); 
-                }
+            } catch (PDOException $e) {
+                throw new DBException($e->getMessage(), $e->getCode(), $e);
             } finally {
                 $stmt->closeCursor();
             }
@@ -115,10 +106,28 @@ abstract class AbstractPDOAdapter implements DBAdapter {
         }
     }
     
+    function runIsolated(callable $action) {
+        if ($this->isolatedConnection !== null) {
+            throw new DBException("Nesting of isolated actions are not allowed");
+        }
+        
+        $this->isolatedConnection = $this->getConnection(true);
+        
+        try {
+            $action();
+        } finally {
+            $this->isolatedConnection = null;
+        }
+    }
+    
     // --- private methods ------------------------------------------
     
     private function getConnection($forceNew = false) {
-        $ret = $this->connection;
+        $ret = $this->isolatedConnection;
+        
+        if ($ret === null) {
+            $ret = $this->connection;
+        }
         
         if ($ret === null || $forceNew) {
             $options = @$this->dbParams['options'];
@@ -127,6 +136,10 @@ abstract class AbstractPDOAdapter implements DBAdapter {
             if (empty($options[PDO::ATTR_TIMEOUT])) {
                 $options[PDO::ATTR_TIMEOUT] = 30;
             }
+            
+            $options[PDO::ATTR_EMULATE_PREPARES] = false;
+            $options[PDO::ATTR_STRINGIFY_FETCHES] = false;
+            $options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
 
             $this->connection = new PDO(
                 $this->dbParams['dsn'],

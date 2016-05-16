@@ -19,7 +19,7 @@ class StreamLogAdapter implements LogAdapter {
     function getLog($domain) {
         $ret = @$this->logs[$domain];
         
-        if ($log === null) {
+        if ($ret === null) {
             $ret = new StreamLog($this->stream, $domain);
             $this->logs[$domain] = $ret;
         }
