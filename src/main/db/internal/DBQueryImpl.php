@@ -1,12 +1,15 @@
 <?php
 
-namespace prelude\db;
+namespace prelude\db\internal;
 
-require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../DB.php';
 require_once __DIR__ . '/../DBQuery.php';
 require_once __DIR__ . '/../../util/Seq.php';
+require_once __DIR__ . '/../../util/ValueObject.php';
 
 use PDO;
+use prelude\db\DB;
+use prelude\DB\DBQuery;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 
@@ -17,7 +20,7 @@ class DBQueryImpl implements DBQuery {
     private $limit;
     private $offset;
     
-    function __construct(Database $db, $query, $bindings = null, $limit = null, $offset = null) {
+    function __construct(DB $db, $query, $bindings = null, $limit = null, $offset = null) {
         $this->db = $db;
         $this->query = $query;
         $this->bindings = $bindings;

@@ -3,12 +3,28 @@
 namespace prelude\db;
 
 require_once __DIR__ . '/../../main/db/DBManager.php';
+require_once __DIR__ . '/../../main/log/Logger.php';
+require_once __DIR__ . '/../../main/log/Log.php';
+require_once __DIR__ . '/../../main/log/adapters/StreamLogAdapter.php';
 
 use PHPUnit_Framework_TestCase;
+use prelude\log\Logger;
+use prelude\log\Log;
+use prelude\log\adapters\StreamLogAdapter;
 
+// this has normally to be handled in the loading script
 error_reporting(E_ALL);
+Logger::setAdapter(new StreamLogAdapter(STDOUT));
+Logger::setDefaultLogLevel(Log::INFO);
 
-class DatabaseTest extends PHPUnit_Framework_TestCase {
+class DBTest extends PHPUnit_Framework_TestCase {
+    private $log;
+    
+    function __construct() {
+        // normally it's better to pass the log as constructor argument
+        $this->log = Logger::getLog($this);
+    }
+    
     function testRun() {
         // The registry pattern is not really the coolest :-(
         DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
@@ -58,13 +74,17 @@ class DatabaseTest extends PHPUnit_Framework_TestCase {
                 ->query('delete from user')
                 ->execute();
                 
-            $shopDB
+            $this->log->info('Table has been created');
+                
+            $userCount = $shopDB
                 ->multiQuery('
                     insert  into user values
                     (:id, :firstName, :lastName, :city, :country, :type)
                 ')
                 ->bindMany($newUsers)
                 ->process();
+                
+            $this->log->info('%d users have been inserted', $userCount);
         });
         
         $users =
@@ -95,6 +115,7 @@ class DatabaseTest extends PHPUnit_Framework_TestCase {
             );
         }
         
+        $this->log->info('Finished successfully');
         flush();
     }
 }

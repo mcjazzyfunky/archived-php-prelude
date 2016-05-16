@@ -13,7 +13,7 @@ class PathScannerTest extends PHPUnit_Framework_TestCase {
         $arr =
             PathScanner::create()
                 ->recursive()
-                ->includeFiles(['*.php', '*.js', '*.css'])
+                ->includeFiles(['*.php', '*.json'])
                 ->excludeFiles('*tmp*')
                 ->excludeLinks()
                 ->absolutePaths()
@@ -22,7 +22,5 @@ class PathScannerTest extends PHPUnit_Framework_TestCase {
                 ->toArray();
 
         print_r($arr);
-        flush();
-        exit();
     }
 }

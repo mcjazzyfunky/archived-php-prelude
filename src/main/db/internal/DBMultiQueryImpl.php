@@ -1,11 +1,13 @@
 <?php
 
-namespace prelude\db;
+namespace prelude\db\internal;
 
-require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../DB.php';
 require_once __DIR__ . '/../DBMultiQuery.php';
 require_once __DIR__ . '/../../util/Seq.php';
 
+use prelude\db\DB;
+use prelude\db\DBMultiQuery;
 use prelude\util\Seq;
 
 class DBMultiQueryImpl implements DBMultiQuery {
@@ -15,7 +17,7 @@ class DBMultiQueryImpl implements DBMultiQuery {
     private $forceTransaction;
 
     function __construct(
-        Database $db,
+        DB $db,
         $query,
         Seq $bindings = null,
         $forceTransaction = false) {

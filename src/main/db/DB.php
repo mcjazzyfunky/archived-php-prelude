@@ -14,7 +14,7 @@ use prelude\util\Seq;
 use prelude\util\ValueObject;
 
 
-interface Database {
+interface DB {
     function getDsn();
     
     function getUsername();

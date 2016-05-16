@@ -1,10 +1,10 @@
 <?php
 
-namespace prelude\db;
+namespace prelude\db\internal;
 
 require_once __DIR__ . '/DBMultiQueryImpl.php';
 require_once __DIR__ . '/DBQueryImpl.php';
-require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../DB.php';
 require_once __DIR__ . '/../DBException.php';
 require_once __DIR__ . '/../DBQuery.php';
 require_once __DIR__ . '/../../util/ValueObject.php';
@@ -12,10 +12,13 @@ require_once __DIR__ . '/../../util/Seq.php';
 
 use InvalidArgumentException;
 use PDO;
+use prelude\db\DB;
+use prelude\db\DBException;
+use prelude\db\DBQuery;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 
-class DatabaseImpl implements Database {
+class DBImpl implements DB {
     private $dsn;
     private $username;
     private $password;
@@ -79,10 +82,11 @@ class DatabaseImpl implements Database {
     }
     
     function process($query, Seq $bindings = null, $forceTransaction = false) {
+        $ret = 0;
         $qry = trim($query);
         $conn = $this->getConnection();
     
-        $process = function () use ($qry, $bindings, $conn) {
+        $process = function () use ($qry, $bindings, $conn, &$ret) {
             $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
         
             if ($stmt === false) {
@@ -93,6 +97,7 @@ class DatabaseImpl implements Database {
             try {
                 foreach ($bindings as $binding) {
                     $result = $stmt->execute($binding);
+                    ++$ret;
                 }
             
                 // TODO
@@ -111,6 +116,8 @@ class DatabaseImpl implements Database {
         } else {
             $process();
         }
+        
+        return $ret;
     }
     
     function fetch($query, $bindings = null, $limit = null, $offset = 0) {
@@ -145,10 +152,10 @@ class DatabaseImpl implements Database {
     
     // --- private methods ------------------------------------------
     
-    private function getConnection() {
+    private function getConnection($forceNew = false) {
         $ret = $this->connection;
         
-        if ($ret === null) {
+        if ($ret === null || $forceNew) {
             $options = $this->options;
            
             // TODO: Quite sure this is a stupid idea... 

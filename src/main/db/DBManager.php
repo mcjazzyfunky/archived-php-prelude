@@ -2,11 +2,12 @@
 
 namespace prelude\db;
 
-require_once __DIR__ . '/internal/DatabaseImpl.php';
+require_once __DIR__ . '/internal/DBImpl.php';
 require_once __DIR__ . '/../util/Seq.php';
 require_once __DIR__ . '/../util/ValueObject.php';
 
 use PDO;
+use prelude\db\internal\DBImpl;
 
 class DBManager {
     private static $registeredDBs = [];
@@ -17,7 +18,7 @@ class DBManager {
     }
     
     static function createDB($params) {
-        return new DatabaseImpl(
+        return new DBImpl(
             $params['dsn'],
             @$params['username'],
             @$params['password'],
@@ -29,7 +30,7 @@ class DBManager {
 
     static function registerDB($alias, $dbOrParams) {
         $db =
-            $dbOrParams instanceof Database
+            $dbOrParams instanceof DB
             ? $dbOrParams
             : self::createDB($dbOrParams);
 
