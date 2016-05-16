@@ -19,37 +19,19 @@ use prelude\util\Seq;
 use prelude\util\ValueObject;
 
 class DBImpl implements DB {
-    private $dsn;
-    private $username;
-    private $password;
-    private $options;
+    private $params;
     private $connection;
     private static $registeredDBs = [];
     
-    function __construct($dsn, $username = null, $password = null, array $options = null) {
-        $this->dsn = $dsn;
-        $this->username = $username;
-        $this->passowrd = $password;
-        $this->options = $options;
+    function __construct(array $params) {
+        $this->params = $params;
         $this->connection = null;
     }
     
-    function getDsn() {
-        return $this->dsn;
+    function getParams() {
+        return $this->params;
     }
-    
-    function getUsername() {
-        return $this->username;
-    }
-    
-    function getPassword() {
-        return $this->password;
-    }
-    
-    function getOptions() {
-        return $this->options;
-    }
-    
+
     function query($query, $bindings = null, $limit = null, $offset = 0) {
         return new DBQueryImpl($this, $query, $bindings, $limit, $offset);
     }
@@ -156,7 +138,7 @@ class DBImpl implements DB {
         $ret = $this->connection;
         
         if ($ret === null || $forceNew) {
-            $options = $this->options;
+            $options = @$this->params['options'];
            
             // TODO: Quite sure this is a stupid idea... 
             if (empty($options[PDO::ATTR_TIMEOUT])) {
@@ -164,9 +146,9 @@ class DBImpl implements DB {
             }
 
             $this->connection = new PDO(
-                $this->dsn,
-                $this->username,
-                $this->password,
+                $this->params['dsn'],
+                @$this->params['username'],
+                @$this->params['password'],
                 $options);
                 
             $ret = $this->connection;

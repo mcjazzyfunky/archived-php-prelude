@@ -15,13 +15,7 @@ use prelude\util\ValueObject;
 
 
 interface DB {
-    function getDsn();
-    
-    function getUsername();
-    
-    function getPassword();
-    
-    function getOptions();
+    function getParams();
     
     function query($query, $bindings = null, $limit = null, $offset = 0);
     

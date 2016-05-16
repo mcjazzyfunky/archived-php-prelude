@@ -18,14 +18,7 @@ class DBManager {
     }
     
     static function createDB($params) {
-        return new DBImpl(
-            $params['dsn'],
-            @$params['username'],
-            @$params['password'],
-            @$params['options']);
-    }
-
-    static function registerAdapter() {  
+        return new DBImpl($params);
     }
 
     static function registerDB($alias, $dbOrParams) {
