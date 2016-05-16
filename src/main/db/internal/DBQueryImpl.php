@@ -2,14 +2,15 @@
 
 namespace prelude\db\internal;
 
-require_once __DIR__ . '/../DB.php';
 require_once __DIR__ . '/../DBQuery.php';
+require_once __DIR__ . '/../internal/DBAdapter.php';
 require_once __DIR__ . '/../../util/Seq.php';
 require_once __DIR__ . '/../../util/ValueObject.php';
 
 use PDO;
 use prelude\db\DB;
 use prelude\DB\DBQuery;
+use prelude\DB\internal\DBAdapter;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 
@@ -20,8 +21,8 @@ class DBQueryImpl implements DBQuery {
     private $limit;
     private $offset;
     
-    function __construct(DB $db, $query, $bindings = null, $limit = null, $offset = null) {
-        $this->db = $db;
+    function __construct(DBAdapter $adapter, $query, $bindings = null, $limit = null, $offset = null) {
+        $this->adapter = $adapter;
         $this->query = $query;
         $this->bindings = $bindings;
         $this->limit = $limit;
@@ -112,7 +113,7 @@ class DBQueryImpl implements DBQuery {
     }
     
     function fetchSeqOfRecs() {
-        return $this->db->fetch(
+        return $this->adapter->fetch(
             $this->query,
             $this->bindings,
             $this->limit,
