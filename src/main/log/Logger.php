@@ -20,7 +20,12 @@ final class Logger {
             self::$adapter = new NoOperationLogAdapter();
         }
         
-        return self::$adapter->getLog($domain);
+        $domainName =
+            is_object($domain)
+            ? get_class($domain)
+            : $domain;
+        
+        return self::$adapter->getLog($domainName);
     }
     
     static function setDefaultLogLevel($level) {

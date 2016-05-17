@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../main/log/Logger.php';
 require_once __DIR__ . '/../../main/log/Log.php';
 require_once __DIR__ . '/../../main/log/adapters/StreamLogAdapter.php';
 
+use Exception;
 use PHPUnit_Framework_TestCase;
 use prelude\log\Logger;
 use prelude\log\Log;
@@ -22,13 +23,15 @@ class DBTest extends PHPUnit_Framework_TestCase {
     
     function __construct() {
         // maybe it's better to pass the log as constructor argument
-        $this->log = Logger::getLog(__CLASS__);
+        $this->log = Logger::getLog($this);
     }
     
     function testRun() {
         // The registry pattern is not really the coolest :-(
         DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
         DBManager::registerDB('shop', ['dsn' => 'mysql:host=localhost;dbname=test', 'username' => 'root']);
+        
+        $this->log->info("Just a test %s", 'xxx', new Exception('some exception'), ['some' => ' data']);
         
         $newUsers = [[
             'id' => 1001,

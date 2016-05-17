@@ -2,6 +2,8 @@
 
 namespace prelude\log;
 
+use Throwable;
+
 interface Log {
     const TRACE = 0;
     const DEBUG = 1;
@@ -13,7 +15,7 @@ interface Log {
     const ALERT = 7;
     const FATAL = 8;
     
-    function log($level, $message, $args = null, $data = null);
+    function log($level, $message, $args = null, $throwable, $data = null);
     
     function isEnabled($level);
     

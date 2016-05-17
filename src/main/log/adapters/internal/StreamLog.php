@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../Logger.php';
 require_once __DIR__ . '/../../LogUtils.php';
 
 use InvalidArgumentException;
+use Throwable;
 use prelude\log\AbstractLog;
 use prelude\log\Logger;
 use prelude\log\LogUtils;
@@ -19,7 +20,7 @@ class StreamLog extends AbstractLog {
         $this->domain = $domain;
     }
     
-    function log($level, $message, $args = null, $ctx = null) {
+    function log($level, $message, $args = null, $throwable = null, $data = null) {
         if (!LogUtils::isValidLogLevel($level)) {
             throw new InvalidArgumentException(
                 '[StreamLog::log] First argument $level must be a '
@@ -32,6 +33,22 @@ class StreamLog extends AbstractLog {
             $text = LogUtils::formatLogMessage($message, $args); 
             $domain = $this->domain;
             $output = "[$date] [$levelName] [$domain] $text\n";
+            
+            if ($data !== null) {
+                $output .= "---- Data ----\n";
+                $output .= print_r($data, true);
+            }
+            
+            if ($throwable !== null) {
+                $output .= "---- Cause ----\n";
+                $output .= 'Message: ';
+                $output .= $throwable->getMessage();
+                $output .= "\nCode: ";
+                $output .= $throwable->getCode();
+                $output .= "\nStack trace:\n";
+                $output .= $throwable->getTraceAsString();
+                $output .= "\n";
+            }
             
             fputs($this->stream, $output);
             fflush($this->stream);
