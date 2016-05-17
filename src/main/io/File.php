@@ -17,8 +17,8 @@ final class File {
         return $this->path;
     }
     
-    function getFileName() {
-        return Files::getFileName($this->path);
+    function geBaseName() {
+        return Files::getBaseName($this->path);
     }
     
     function getParentFile() {

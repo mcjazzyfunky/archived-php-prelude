@@ -5,44 +5,44 @@ namespace prelude\log;
 require_once __DIR__ . '/Log.php';
 
 abstract class AbstractLog implements Log {
-    abstract function log($level, $message, $args = null, $ctx = null);
+    abstract function log($level, $message, $args = null, $throwable = null, $data = null);
     
     abstract function isEnabled($level);
     
-    function trace($message, $args = null, $ctx = null) {
-        $this->log(Log::TRACE, $message, $args, $ctx);   
+    function trace($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::TRACE, $message, $args, $data);   
     }
     
-    function debug($message, $args = null, $ctx = null) {
-        $this->log(Log::DEBUG, $message, $args, $ctx);   
+    function debug($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::DEBUG, $message, $args, $data, $throwable);   
     }
     
-    function info($message, $args = null, $ctx = null) {
-        $this->log(Log::INFO, $message, $args, $ctx);   
+    function info($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::INFO, $message, $args, $data, $throwable);   
     }
     
-    function notice($message, $args = null, $ctx = null) {
-        $this->log(Log::TRACE, $message, $args, $ctx);   
+    function notice($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::TRACE, $message, $args, $data, $throwable);   
     }
     
-    function warn($message, $args = null, $ctx = null) {
-        $this->log(Log::WARN, $message, $args, $ctx);
+    function warn($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::WARN, $message, $args, $data, $throwable);
     }
     
-    function error($mssage, $args = null, $ctx = null) {
-        $this->log(Log::ERROR, $message, $args, $ctx);
+    function error($mssage, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::ERROR, $message, $args, $data, $throwable);
     }
     
-    function critical($message, $args = null, $ctx = null) {
-        $this->log(Log::CRITICAL, $message, $args, $ctx);
+    function critical($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::CRITICAL, $message, $args, $data, $throwable);
     }
     
-    function alert($message, $args = null, $ctx = null) {
-        $this->log(Log::ALERT, $message, $args, $ctx);
+    function alert($message, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::ALERT, $message, $args, $data);
     }
     
-    function fatal($message = null, $args = null, $ctx = null) {
-        $this->log(Log::FATAL, $message, $args, $ctx);
+    function fatal($message = null, $args = null, $throwable = null, $data = null) {
+        $this->log(Log::FATAL, $message, $args, $data, $throwable);
     }
 
     function isTraceEnabled() {

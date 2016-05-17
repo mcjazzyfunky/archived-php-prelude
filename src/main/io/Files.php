@@ -13,12 +13,17 @@ final class Files {
     private function __construct() {
     }
     
-    static function makeDir($dir, $mode = 0777, $recursive = false) {
+    static function makeDir($dir, $mode = 0777, $recursive = false, $context = null) {
         if ($mode === null) {
             $mode = 0777;
         }
         
-        if (!@mkdir($dir, $mode, $recursive)) {
+        $result =
+            $context === null
+            ? @mkdir($dir, $mode, $recursive)
+            : @mkdir($dir, $mode, $recursive, $context);
+        
+        if ($result === false) {
             throw new IOException("[Files.makeDir] Could not create directory '$dir'");
         }
     }
@@ -68,7 +73,12 @@ final class Files {
         return $ret;
     }
 
-    static function getFileName($path) {
+    static function getBaseName($file) {
+        $path =
+            is_string($file)
+            ? $file
+            : $file->getPath();
+        
         $ret = basename($path);
         
         if ($ret === '') {
@@ -195,10 +205,10 @@ final class Files {
         return is_link($path);
     }
     
-    static function getSize($file) {
+    static function getFileSize($file) {
         if (!is_string($file) && !($file instanceof File)) {
             throw new InvalidArgumentException(
-                '[Files.getSize] First argument $file must be a string '
+                '[Files.getFileSize] First argument $file must be a string '
                 . 'or a File object');
         }
         

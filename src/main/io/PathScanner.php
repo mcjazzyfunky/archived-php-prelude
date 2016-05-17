@@ -11,6 +11,8 @@ use prelude\util\Seq;
 final class PathScanner {
     private $recursive;
     private $listPaths;
+    private $forceAbsolute;
+    private $sort;
     private $fileIncludeFilter;
     private $fileExcludeFilter;
     private $dirIncludeFilter;
@@ -22,14 +24,16 @@ final class PathScanner {
         $defaultFilter = self::createFilter(false);
         
         $this->recursive = false;
-        $this->forceAbsolute = false;
         $this->listPaths = false;
+        $this->forceAbsolute = false;
+        $this->sort = null;
         $this->fileIncludeFilter = $defaultFilter;
         $this->fileExcludeFilter = $defaultFilter;
         $this->dirIncludeFilter = $defaultFilter;
         $this->dirExcludeFilter = $defaultFilter;
         $this->linkIncludeFilter = $defaultFilter;
         $this->linkExcludeFilter = $defaultFilter;
+        $this->forceAbsolute = false;
      }
     
     function recursive($recursive = true) {
@@ -143,14 +147,9 @@ final class PathScanner {
         return $ret;
     }
 
-    function autoTrim($autoTrim) {
-         if (!is_bool($autoTrim)) {
-            throw new InvalidArgumentException(
-                '[PathScanner#recursive] First argument $autoTrim must be boolean');
-        }
-
-        $ret = clone $this; 
-        $ret->autoTrim = $autoTrim;
+    function sort(callable $compare = null) {
+        $ret = clone $this;
+        $ret->sort = $compare;
         return $ret;
     }
 
@@ -160,48 +159,62 @@ final class PathScanner {
                 '[PathScanner#scan] First argument $dir must be a string or a File object');
         }
         
-        return Seq::from(function () use ($dir, $context) {
+        $ret = null;
+
+        if ($this->listPaths) {
+            $ret =
+                $this
+                    ->listPaths(false)
+                    ->scan($dir, $context)
+                    ->map(function ($file) {
+                        return $file->getPath();
+                    });
+        } else {
             $parentPath =
                 is_string($dir)
                 ? $dir
                 : $dir->getPath();
-            
-            $items =
-                $context === null
-                ? scandir($parentPath, SCANDIR_SORT_ASCENDING)
-                : scandir($parentPath, SCANDIR_SORT_ASCENDING, $context);
-            
-            foreach ($items as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                
-                $path = Files::combinePaths($parentPath, $item);
+    
+            $ret = Seq::from(function () use ($dir, $context, $parentPath) {
+                $items =
+                    $context === null
+                    ? scandir($parentPath, SCANDIR_SORT_ASCENDING)
+                    : scandir($parentPath, SCANDIR_SORT_ASCENDING, $context);
                 
                 
-                if ($this->forceAbsolute && !Files::isAbsolute($path)) {
-                    $path = Files::combinePaths(getcwd(), $path);
-                }
-              
-                $file = File::from($path);
-                
-                if ($this->fileIsIncluded($file)) {
-                    if ($this->listPaths) {
-                        yield $path;
-                    } else {
+                foreach ($items as $item) {
+                    if ($item === '.' || $item === '..') {
+                        continue;
+                    }
+                    
+                    $path = Files::combinePaths($parentPath, $item);
+                    
+                    if ($this->forceAbsolute && !Files::isAbsolute($path)) {
+                        $path = Files::combinePaths(getcwd(), $path);
+                    }
+                  
+                    $file = File::from($path);
+                    
+                    if ($this->fileIsIncluded($file)) {
                         yield $file;
                     }
-                }
-                
-                if ($this->recursive && $file->isDir()) {
-                    $subitems = $this->scan($path);
                     
-                    foreach ($subitems as $subitem) {
-                        yield $subitem;
+                    if ($this->recursive && $file->isDir()) {
+                        $subitems = $this->scan($path, $context);
+    
+                        foreach ($subitems as $subitem) {
+                            yield $subitem;
+                        }
                     }
                 }
+            });
+            
+            if ($this->sort !== null) {
+                $ret = $ret->sort($this->sort);
             }
-        });
+        }
+        
+        return $ret;
     }
     
     static function create() {

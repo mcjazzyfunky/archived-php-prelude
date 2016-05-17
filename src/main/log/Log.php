@@ -13,27 +13,27 @@ interface Log {
     const ALERT = 7;
     const FATAL = 8;
     
-    function log($level, $message, $args = null, $ctx = null);
+    function log($level, $message, $args = null, $data = null);
     
     function isEnabled($level);
     
-    function trace($message, $args = null, $ctx = null);
+    function trace($message, $args = null, $throwable = null, $data = null);
     
-    function debug($message, $args = null, $ctx = null);
+    function debug($message, $args = null, $throwable = null, $data = null);
     
-    function info($message, $args = null, $ctx = null);
+    function info($message, $args = null, $throwable = null, $data = null);
     
-    function notice($message, $args = null, $ctx = null);  
+    function notice($message, $args = null, $throwable = null, $data = null);  
     
-    function warn($message, $args = null, $ctx = null);
+    function warn($message, $args = null, $throwable = null, $data = null);
     
-    function error($mssage, $args = null, $ctx = null);
+    function error($mssage, $args = null, $throwable = null, $data = null);
     
-    function critical($message, $args = null, $ctx = null);
+    function critical($message, $args = null, $throwable = null, $data = null);
     
-    function alert($message, $args = null, $ctx = null);
+    function alert($message, $args = null, $throwable = null, $data = null);
     
-    function fatal($message = null, $args = null, $ctx = null);
+    function fatal($message = null, $args = null, $throwable = null, $data = null);
 
     function isTraceEnabled();
 

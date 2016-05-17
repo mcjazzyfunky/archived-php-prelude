@@ -158,12 +158,12 @@ final class Seq implements IteratorAggregate {
         return new self(function () use ($order) {
             $arr = $this->toArray();
             
-            if ($order = null) {
+            if ($order === null) {
                 sort($arr);
             } else if (is_integer($order)) {
                 sort($arr, $order);
             } else {
-                usort($arr, $orr);
+                usort($arr, $order);
             }
             
             foreach ($arr as $item) {
