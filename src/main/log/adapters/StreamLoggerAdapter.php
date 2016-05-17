@@ -3,17 +3,22 @@
 namespace prelude\log\adapters;
 
 require_once __DIR__ . '/internal/StreamLog.php';
-require_once __DIR__ . '/../LogAdapter.php';
+require_once __DIR__ . '/../LoggerAdapter.php';
 
-use prelude\log\LogAdapter;
+use prelude\log\LoggerAdapter;
 use prelude\log\adapters\internal\StreamLog;
 
-class StreamLogAdapter implements LogAdapter {
+class StreamLoggerAdapter implements LoggerAdapter {
+    private $stream;
     private $logs;
 
     function __construct($stream) {
         $this->stream = $stream;
-        $this->log = [];
+        $this->logs = [];
+    }
+    
+    function getStream() {
+        return $this->stream;
     }
     
     function getLog($domain) {
@@ -25,5 +30,9 @@ class StreamLogAdapter implements LogAdapter {
         }
         
         return $ret;
+    }
+    
+    function getLogLevelByDomain($domain) {
+        return Logger::getDefaultLogLevel();
     }
 }

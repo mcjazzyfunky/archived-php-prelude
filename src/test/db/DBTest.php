@@ -5,17 +5,20 @@ namespace prelude\db;
 require_once __DIR__ . '/../../main/db/DBManager.php';
 require_once __DIR__ . '/../../main/log/Logger.php';
 require_once __DIR__ . '/../../main/log/Log.php';
-require_once __DIR__ . '/../../main/log/adapters/StreamLogAdapter.php';
+require_once __DIR__ . '/../../main/log/adapters/StreamLoggerAdapter.php';
+require_once __DIR__ . '/../../main/log/adapters/FileLoggerAdapter.php';
 
 use Exception;
 use PHPUnit_Framework_TestCase;
 use prelude\log\Logger;
 use prelude\log\Log;
-use prelude\log\adapters\StreamLogAdapter;
+use prelude\log\adapters\StreamLoggerAdapter;
+use prelude\log\adapters\FileLoggerAdapter;
 
 // this has normally to be handled in the loading script
 error_reporting(E_ALL);
-Logger::setAdapter(new StreamLogAdapter(STDOUT));
+Logger::setAdapter(new StreamLoggerAdapter(STDOUT));
+//Logger::setAdapter(new FileLoggerAdapter('./test-{date}.log'));
 Logger::setDefaultLogLevel(Log::INFO);
 
 class DBTest extends PHPUnit_Framework_TestCase {
@@ -30,8 +33,6 @@ class DBTest extends PHPUnit_Framework_TestCase {
         // The registry pattern is not really the coolest :-(
         DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
         DBManager::registerDB('shop', ['dsn' => 'mysql:host=localhost;dbname=test', 'username' => 'root']);
-        
-        $this->log->info("Just a test %s", 'xxx', new Exception('some exception'), ['some' => ' data']);
         
         $newUsers = [[
             'id' => 1001,
@@ -122,8 +123,5 @@ class DBTest extends PHPUnit_Framework_TestCase {
                 $user->country
             );
         }
-        
-        $this->log->info('Finished successfully');
-        flush();
     }
 }
