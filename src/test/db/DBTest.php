@@ -27,7 +27,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
     
     function testRun() {
         // The registry pattern is not really the coolest :-(
-       // DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
+        DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
         DBManager::registerDB('shop', ['dsn' => 'mysql:host=localhost;dbname=test', 'username' => 'root']);
         
         $newUsers = [[

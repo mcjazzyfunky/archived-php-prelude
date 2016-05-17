@@ -9,7 +9,6 @@ require_once __DIR__ . '/DBQueryImpl.php';
 require_once __DIR__ . '/../DB.php';
 require_once __DIR__ . '/../DBException.php';
 require_once __DIR__ . '/../DBQuery.php';
-require_once __DIR__ . '/../../util/ValueObject.php';
 require_once __DIR__ . '/../../util/Seq.php';
 
 use InvalidArgumentException;
@@ -19,8 +18,6 @@ use prelude\db\DBException;
 use prelude\db\DBQuery;
 use prelude\db\internal\adapters\PDOSQLiteAdapter;
 use prelude\db\internal\adapters\PDOMySQLAdapter;
-use prelude\util\Seq;
-use prelude\util\ValueObject;
 
 class DBImpl implements DB {
     private $params;

@@ -6,7 +6,7 @@ require_once __DIR__ . '/Log.php';
 
 use InvalidArgumentException;
 
-class LogUtils {
+final class LogUtils {
     private function __construct() {
     }
     

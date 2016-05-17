@@ -10,7 +10,7 @@ require_once(__DIR__ . '/../util/Seq.php');
 use InvalidArgumentException;
 use prelude\util\Seq;
 
-class TextWriter {
+final class TextWriter {
     private $filename;
     private $context;
     

@@ -8,17 +8,17 @@ use InvalidArgumentException;
 use IteratorAggregate;
 use UnexpectedValueException; 
 
-class Seq implements IteratorAggregate {
+final class Seq implements IteratorAggregate {
     private $generatorFunction;
     private $args;
     
-    function __construct(Closure $generatorFunction, array $args = null) {
+    private function __construct(Closure $generatorFunction, array $args = null) {
         $this->generatorFunction = $generatorFunction;
         $this->args = $args;
     }
     
     function filter(callable $pred) {
-        return new Seq(function () use ($pred) {
+        return new self(function () use ($pred) {
             $idx = -1;
             
             foreach ($this as $item) {
@@ -42,7 +42,7 @@ class Seq implements IteratorAggregate {
     }
 
     function map(callable $fn) {
-        return new Seq(function () use ($fn) {
+        return new self(function () use ($fn) {
             $idx = -1;
             
             foreach ($this as $item) {
@@ -57,7 +57,7 @@ class Seq implements IteratorAggregate {
                 '[Seq#take] First argument $n must be an integer');
         }
         
-        return new Seq(function () use ($n) {
+        return new self(function () use ($n) {
             $idx = -1;
             
             foreach ($this as $item) {
@@ -71,7 +71,7 @@ class Seq implements IteratorAggregate {
     }
     
     function takeWhile(callable $pred) {
-        return new Seq(function () use ($pred) {
+        return new self(function () use ($pred) {
             $idx = -1;
             
             foreach ($this as $item) {
@@ -90,7 +90,7 @@ class Seq implements IteratorAggregate {
                 '[Seq#skip] First argument $n must be an integer');
         }
         
-        return new Seq(function () use ($n) {
+        return new self(function () use ($n) {
             $idx = -1;
             
             foreach ($this as $item) {
@@ -102,7 +102,7 @@ class Seq implements IteratorAggregate {
     }
 
     function skipWhile(callable $pred) {
-        return new Seq(function () use ($pred) {
+        return new self(function () use ($pred) {
             $idx = -1;
             $started = false;
             
@@ -119,7 +119,7 @@ class Seq implements IteratorAggregate {
     }
     
     function flatten() {
-        return new Seq(function () {
+        return new self(function () {
             foreach ($this as $item) {
                 foreach (Seq::from($item) as $subitem) {
                     yield $subitem;
@@ -155,7 +155,7 @@ class Seq implements IteratorAggregate {
                 . 'or a callabel or null');
         }
         
-        return new Seq(function () use ($order) {
+        return new self(function () use ($order) {
             $arr = $this->toArray();
             
             if ($order = null) {
@@ -173,7 +173,7 @@ class Seq implements IteratorAggregate {
     }
     
     function peek(callable $action) {
-        return new Seq(function () use ($action) {
+        return new self(function () use ($action) {
             $idx = -1; 
             
             foreach ($this as $item) {
@@ -310,9 +310,13 @@ class Seq implements IteratorAggregate {
     }
     
     static function of($item) {
-        return new Seq(function () use ($item) {
+        return new self(function () use ($item) {
             yield $item; 
         });
+    }
+    
+    static function create(Closure $generatorFunction, array $args = null) {
+        return new self($generatorFunction, $args);
     }
     
     static function from($source) {
@@ -321,11 +325,13 @@ class Seq implements IteratorAggregate {
         if ($source instanceof Seq) {
             $ret = $source;
         } else if (is_array($source) || $source instanceof IteratorAggregate) {
-            $ret = new Seq(function () use ($source) {
+            $ret = new self(function () use ($source) {
                 foreach ($source as $item) {
                     yield $item;
                 } 
             });
+        } else if ($source instanceof Closure) {
+            $ret = new self($source);
         } else {
             $ret = self::nil();
         }
@@ -353,7 +359,7 @@ class Seq implements IteratorAggregate {
                 '[Seq.range] Thrid argument $step must be an non-zero integer');
         }
         
-        return new Seq(function () use ($start, $end, $step) {
+        return new self(function () use ($start, $end, $step) {
             if ($start < $end && $step > 0) {
                 for ($i = $start; $i < $end; $i += $step) {
                     yield $i;
@@ -367,7 +373,7 @@ class Seq implements IteratorAggregate {
     }
     
     static function iterate(array $startValues, callable $fn) {
-        return new Seq(function () use ($startValues, $fn) {
+        return new self(function () use ($startValues, $fn) {
             foreach ($startValues as $value) {
                 yield $value;
             }
@@ -385,7 +391,7 @@ class Seq implements IteratorAggregate {
     }
     
     static function repeat($item, $count = null) {
-        return new Seq(function () use ($item, $count) {
+        return new self(function () use ($item, $count) {
             $idx = -1;
             
             while ($count === null || ++$idx < $count) {
@@ -397,7 +403,7 @@ class Seq implements IteratorAggregate {
     static function cycle($items, $count = null) {
         $seq = Seq::from($items);
 
-        return new Seq(function () use ($seq, $count) {
+        return new self(function () use ($seq, $count) {
             $idx = -1;
             
             while ($count === null || ++$idx < $count) {
@@ -415,7 +421,7 @@ class Seq implements IteratorAggregate {
     static function concatMany($iterable) {
         $seq = Seq::from($iterable);
         
-        return new Seq(function () use ($seq) {
+        return new self(function () use ($seq) {
             foreach ($seq as $items) {
                 foreach(Seq::from($items) as $item) {
                     yield $item;
@@ -428,7 +434,7 @@ class Seq implements IteratorAggregate {
         $seq1 = Seq::from($iterable1);
         $seq2 = Seq::from($iterable2);
         
-        return new Seq(function () use ($seq1, $seq2, $fn) {
+        return new self(function () use ($seq1, $seq2, $fn) {
             $generator1 = null;
             $generator2 = null;
 
@@ -462,7 +468,7 @@ class Seq implements IteratorAggregate {
             ? $iterable
             : Seq::from($iterable)->toArray();
         
-        return new Seq(function () use ($iterables, $fn) {
+        return new self(function () use ($iterables, $fn) {
             $iterators = [];
             
             try {

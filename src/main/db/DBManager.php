@@ -9,12 +9,10 @@ require_once __DIR__ . '/../util/ValueObject.php';
 use PDO;
 use prelude\db\internal\DBImpl;
 
-class DBManager {
+final class DBManager {
     private static $registeredDBs = [];
     
-    function __construct() {
-        throw new Exception(
-            '[DBRegistry::__constrct] Class is not instantiable');
+    private function __construct() {
     }
     
     static function createDB($params) {

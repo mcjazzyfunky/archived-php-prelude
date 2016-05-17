@@ -9,7 +9,7 @@ require_once(__DIR__ . '/../util/Seq.php');
 use InvalidArgumentException;
 use prelude\util\Seq;
 
-class TextReader {
+final class TextReader {
     private $filename;
     private $context;
     private $text;
@@ -46,7 +46,7 @@ class TextReader {
         $ret = null;
         
         if ($this->text !== null) {
-            $ret = new Seq(function () {
+            $ret = Seq::from(function () {
                 // Needs more temporary space but is way faster then preg_split
                 $lines = explode("\n",
                     str_replace(["\r\n", "\n\r", "\r"], "\n", $this->text));
@@ -56,7 +56,7 @@ class TextReader {
                 }
             });
         } else {
-            $ret = new Seq(function() {
+            $ret = Seq::from(function() {
                 $filename = $this->filename;
                 $context = $this->context;
                 
@@ -128,7 +128,7 @@ class TextReader {
         try {
             $action($fhandle);
             
-            new Seq(function () use ($action, $fhandle) {
+            Seq::from(function () use ($action, $fhandle) {
                  
             });
         } finally {

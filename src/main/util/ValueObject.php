@@ -6,10 +6,10 @@ use ArrayAccess;
 use Countable;
 use InvalidArgumentException;
 
-class ValueObject implements ArrayAccess, Countable {
+final class ValueObject implements ArrayAccess, Countable {
     protected $propMap = array();
 
-    function __construct($props = null) {
+    private function __construct($props = null) {
         if (is_array($props)) {
             foreach ($props as $k => $v) {
                 $this->__set($k, $v);
@@ -64,5 +64,9 @@ class ValueObject implements ArrayAccess, Countable {
     public function count() {
         $ret = count($this->propMap);
         return $ret;
+    }
+    
+    static function from($props) {
+        return new self($props);
     }
 }

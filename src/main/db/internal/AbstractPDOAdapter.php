@@ -65,7 +65,7 @@ abstract class AbstractPDOAdapter implements DBAdapter {
     function fetch($query, $bindings = null, $limit = null, $offset = 0) {
         $qry = $this->limitQuery($query, $limit, $offset);
         
-        return new Seq(function () use ($qry, $bindings) {
+        return Seq::from(function () use ($qry, $bindings) {
             try {
                 $conn = $this->getConnection();
                 $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);

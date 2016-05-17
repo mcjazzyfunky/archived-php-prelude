@@ -75,7 +75,7 @@ class DBQueryImpl implements DBQuery {
     function fetchVO() {
         $rec = $this->fetchRec();
     
-        return $rec === null ? $rec : new ValueObject($rec);
+        return $rec === null ? $rec : ValueObject::from($rec);
     }
     
     function fetchSingles() {
@@ -122,7 +122,7 @@ class DBQueryImpl implements DBQuery {
     
     function fetchSeqOfVOs() {
         return $this->fetchSeqOfRecs()->map(function ($rec) {
-            return new ValueObject($rec);
+            return ValueObject::from($rec);
         });
     }
 }

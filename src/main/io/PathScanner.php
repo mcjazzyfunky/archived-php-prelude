@@ -8,7 +8,7 @@ require_once __DIR__ . '/../util/Seq.php';
 use InvalidArgumentException;
 use prelude\util\Seq;
 
-class PathScanner {
+final class PathScanner {
     private $recursive;
     private $listPaths;
     private $fileIncludeFilter;
@@ -160,7 +160,7 @@ class PathScanner {
                 '[PathScanner#scan] First argument $dir must be a string or a File object');
         }
         
-        return new Seq(function () use ($dir, $context) {
+        return Seq::from(function () use ($dir, $context) {
             $parentPath =
                 is_string($dir)
                 ? $dir
@@ -179,11 +179,11 @@ class PathScanner {
                 $path = Files::combinePaths($parentPath, $item);
                 
                 
-                if ($this->forceAbsolute && !Files::isAbsolutePath($path)) {
+                if ($this->forceAbsolute && !Files::isAbsolute($path)) {
                     $path = Files::combinePaths(getcwd(), $path);
                 }
               
-                $file = new File($path);
+                $file = File::from($path);
                 
                 if ($this->fileIsIncluded($file)) {
                     if ($this->listPaths) {

@@ -124,12 +124,4 @@ class SeqTest extends \PHPUnit_Framework_TestCase {
         
         $this->assertEquals($arr, [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]);
     }
-    
-    function testRun() {
-        $seq = Seq::zipMany([[1, 2, 3], [11, 22, 33, 44], [111, 222]], function ($a, $b, $c) { return "$a $b $c"; });
-        
-        print_r($seq->toArray());
-        flush();
-        exit();
-    }
 }

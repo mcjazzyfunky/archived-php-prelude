@@ -8,7 +8,7 @@ require_once __DIR__ . '/adapters/NoOperationLogAdapter.php';
 use prelude\log\Log;
 use prelude\log\adapters\NoOperationLogAdapter;
 
-class Logger {
+final class Logger {
     private static $adapter = null;
     private static $defaultLogLevel = Log::WARN;
     
