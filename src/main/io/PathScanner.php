@@ -176,11 +176,7 @@ final class PathScanner {
                 : $dir->getPath();
     
             $ret = Seq::from(function () use ($dir, $context, $parentPath) {
-                $items =
-                    $context === null
-                    ? scandir($parentPath, SCANDIR_SORT_ASCENDING)
-                    : scandir($parentPath, SCANDIR_SORT_ASCENDING, $context);
-                
+                $items = Files::scanDir($parentPath, $context);
                 
                 foreach ($items as $item) {
                     if ($item === '.' || $item === '..') {
@@ -193,7 +189,7 @@ final class PathScanner {
                         $path = Files::combinePaths(getcwd(), $path);
                     }
                   
-                    $file = File::from($path);
+                    $file = Files::getFile($path);
                     
                     if ($this->fileIsIncluded($file)) {
                         yield $file;

@@ -4,13 +4,31 @@ namespace prelude\io;
 
 require_once dirname(__FILE__) . '/File.php';
 require_once dirname(__FILE__) . '/IOException.php';
+require_once dirname(__FILE__) . '/internal/FileImpl.php';
 require_once dirname(__FILE__) . '/../util/Seq.php';
 
 use InvalidArgumentException;
+use prelude\io\internal\FileImpl;
 use prelude\util\Seq;
 
 final class Files {
     private function __construct() {
+    }
+    
+    static function getFile($file) {
+        $ret =
+            is_string($file)
+            ? new FileImpl($file)
+            : $file;
+        
+        return $ret;
+    }
+    
+    static function getPath($file) {
+        return
+            is_string($file)
+            ? $file
+            : $file->getPath();
     }
     
     static function makeDir($dir, $mode = 0777, $recursive = false, $context = null) {
@@ -54,8 +72,27 @@ final class Files {
             }
         }
     }
+    
+    static function scanDir($directory, $context = null) {
+        $path = self::getPath($directory);
+        
+        $ret =
+            $context === null
+            ? @scandir($path, null)
+            : @scandir($path, null, $context);
 
-    static function delete($file) {
+        if ($ret === false) {
+            if (!self::isDir($path)) {
+                throw new IOException(
+                    "[Files.list] '$path' is either not a directory "
+                    . 'or not readable');
+            }
+        }
+        
+        return $ret;
+    }
+
+    static function remove($file) {
         $ret = false;
 
         if (is_dir($file)) {
@@ -111,7 +148,7 @@ final class Files {
     static function getParentFile($file) {
         $parentPath = self::getParentPath($file);
         
-        return $parentPath === false ? false : File::from($parentPath);
+        return $parentPath === false ? false : Files::getFile($parentPath);
     }
     
     static function isAbsolute($file) {
