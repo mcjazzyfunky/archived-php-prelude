@@ -16,8 +16,16 @@ final class Files {
     }
     
     static function getFile($file) {
+        $fileIsString = is_string($file);
+        
+        if (!$fileIsString && !($file instanceof File)) {
+            throw new InvalidArgumentException(
+                '[Files#getFile] First argument $file must either be a '
+                . 'string or a File object');
+        }
+        
         $ret =
-            is_string($file)
+            $fileIsString
             ? new FileImpl($file)
             : $file;
         
@@ -25,24 +33,34 @@ final class Files {
     }
     
     static function getPath($file) {
+        $fileIsString = is_string($file);
+        
+        if (!$fileIsString && !($file instanceof File)) {
+            throw new InvalidArgumentException(
+                '[Files#getPath] First argument $file must either be a '
+                . 'string or a File object');
+        }
+
         return
-            is_string($file)
+            $fileIsString
             ? $file
             : $file->getPath();
     }
     
     static function makeDir($dir, $mode = 0777, $recursive = false, $context = null) {
+        $path = self::getPath($dir);
+        
         if ($mode === null) {
             $mode = 0777;
         }
         
         $result =
             $context === null
-            ? @mkdir($dir, $mode, $recursive)
-            : @mkdir($dir, $mode, $recursive, $context);
+            ? @mkdir($path, $mode, $recursive)
+            : @mkdir($path, $mode, $recursive, $context);
         
         if ($result === false) {
-            throw new IOException("[Files.makeDir] Could not create directory '$dir'");
+            throw new IOException("[Files.makeDir] Could not create directory '$path'");
         }
     }
 
@@ -326,5 +344,20 @@ final class Files {
         $lastAccessTime = $this->getLastAccessTime();
         
         return $lastAccessTime === false ? false : now() -> $lastAccessTime;
+    }
+    
+    static function openFile($file, $openMode, $context = null) {
+        $path = self::getPath($file);
+        
+        $stream =
+            $context === null
+            ? fopen($path, $openMode)
+            : fopen($path, $openMode, null, $context);
+        
+        if ($stream === false) {
+            throw new IOException("Could not open file '$path'");
+        }
+        
+        return $stream;
     }
 }

@@ -3,156 +3,88 @@
 namespace prelude\io;
 
 require_once(__DIR__ . '/File.php');
+require_once(__DIR__ . '/Files.php');
 require_once(__DIR__ . '/IOException.php');
 require_once(__DIR__ . '/../util/Seq.php');
 
+use \Closure;
 use InvalidArgumentException;
 use prelude\util\Seq;
 
 final class TextReader {
-    private $filename;
-    private $context;
-    private $text;
-    
-    private function __construct($filename, array $context = null, $text = null) {
-        $this->filename = $filename;
-        $this->context = $context;
-        $this->text = $text;
+    private $openFile;
+
+    private function __construct(Closure $openFile) {
+        $this->openFile = $openFile;
     }
-    
+
+    function open() {
+        $openFile = $this->openFile;
+        return $openFile();
+    }
+
     function readFull() {
-        $ret = null;
-        
-        if ($this->text !== null) {
-            $ret = $this->text;
-        } else {
-            $filename = $this->filename;
-            $context = $this->context;
-            
-            $ret = $context === null
-                ? @file_get_contents($filename)
-                : @file_get_contens($filename, false, $context);
-            
-            if ($ret === false) {
-                $message = error_get_last()['message'];
-                throw new IOException($message);
+        $ret = '';
+        $stream = $this->open();
+
+        try {        
+            while (!feof($stream)) {
+                $ret .= fread($stream, 8192);
             }
+        } finally {        
+            fclose($stream);
         }
 
         return $ret;
     }
     
-    function readLines() {
-        $ret = null;
+    function readSeq() {
+        $openFile = $this->openFile;
         
-        if ($this->text !== null) {
-            $ret = Seq::from(function () {
-                // Needs more temporary space but is way faster then preg_split
-                $lines = explode("\n",
-                    str_replace(["\r\n", "\n\r", "\r"], "\n", $this->text));
-                    
-                foreach ($lines as $line) {
-                    yield $line;
-                }
-            });
-        } else {
-            $ret = Seq::from(function() {
-                $filename = $this->filename;
-                $context = $this->context;
-                
-                try {
-                    $fhandle = $context === null
-                        ? @fopen(
-                            $filename,
-                            'rb',
-                            false)
-                        : @fopen(
-                            $filename,
-                            'rb',
-                            false,
-                            $context);
-                    
-                    if ($fhandle === false) {
-                        $message = error_get_last()['message'];
-                        throw new IOException($message);
-                    }
-                    
-                    while (($line = @fgets($fhandle)) !== false) {
-                        $length = strlen($line);
-                        
-                        while ($length > 0
-                            && ($line[$length - 1] === "\r" || $line[$length -1] === "\n")) {
-                        
-                            --$length;
-                        }
-                        
-                        
-                        yield substr($line, 0, $length);
-                    }
-                    
-                    if (!feof($fhandle)) {
-                        $message = error_get_last()['message'];
-                        @fclose($fhandle);
-                        throw new IOException($message);
-                    }
-                } finally {
-                    @fclose($fhandle);
-                }
-            });
-        }
-        
-        return $ret;
-    }
-    
-    function process(callable $action) {
-        $filename = $this->filename;
-        $context = $this->context;
-        
-        $fhandle =
-            $context === null
-            ? @fopen(
-                $filename,
-                'rb',
-                false)
-            : @fopen(
-                $filename,
-                'rb',
-                false,
-                $context);
-        
-        if ($fhandle === false) {
-            $message = error_get_last()['message'];
-            throw new IOException($message);
-        }
-        
-        try {
-            $action($fhandle);
+        return Seq::from(function() use ($openFile) {
+            $stream = $openFile();
             
-            Seq::from(function () use ($action, $fhandle) {
-                 
-            });
-        } finally {
-            @fclose($fhandle);
-        }
+            try {
+                while (($line = @fgets($stream)) !== false) {
+                    $length = strlen($line);
+                    
+                    while ($length > 0
+                        && ($line[$length - 1] === "\r" || $line[$length -1] === "\n")) {
+                    
+                        --$length;
+                    }
+                    
+                    yield substr($line, 0, $length);
+                }
+                
+                if (!feof($stream)) {
+                    $message = error_get_last()['message'];
+                    throw new IOException($message);
+                }
+            } finally {
+                fclose($stream);
+            }
+        });
     }
     
-    static function fromFile($file, array $context = null) {
-         if (!is_string($file) && !($file instanceof File)) {
-            throw new InvalidArgumentException(
-                '[FileReader.fromFile] First argument $file must either '
-                . ' be a string or a File object');
-        }
+    static function fromFile($file, $context = null) {
+        $path = Files::getPath($file);
         
-        $filename = is_string($file) ? $file : $file->getPath();
-        return new self($filename, $context, null);
+        $openFile = function () use ($path, $context) {
+            return Files::openFile($path, 'rb', $context);
+        };
+
+        return new self($openFile);
     }
     
     static function fromString($text) {
-         if (!is_string($text)) {
-            throw new InvalidArgumentException(
-                '[FileReader.fromString] First argument $text must be a string');
-        }
+        $openFile = function () use ($text) {
+            $stream = fopen('php://memory', 'wr');
+            fwrite($stream, $text);
+            rewind($stream);
+            return $stream;
+        };
         
-        return new self(null, null, $text);
-    } 
+        return new self($openFile);
+    }
 }
