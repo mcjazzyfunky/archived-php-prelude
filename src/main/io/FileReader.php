@@ -18,7 +18,7 @@ final class FileReader {
         $this->openFile = $openFile;
     }
 
-    function open() {
+    public function open() {
         $openFile = $this->openFile;
         return $openFile();
     }

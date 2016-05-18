@@ -35,7 +35,7 @@ final class Seq implements IteratorAggregate {
         });
     }
     
-    function rejectNull() {
+    function rejectNulls() {
         return $this->filter(function ($item) {
             return $item !== null;
         });

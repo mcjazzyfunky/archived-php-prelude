@@ -1,23 +1,28 @@
 <?php
 
-class CSVFormat {
+namespace prelude\csv;
+
+final class CSVFormat {
     private $columns;
     private $delimiter;
-    private $recordSeparator;
+    private $escapeChar;
+    private $quoteChar;
+    private $suppressHeader;
+    private $autoTrim;
     
-    function __construct() {
+    private function __construct() {
         $this->columns = null;
         $this->delimiter = ',';
-        $this->recordSeparator = "\n";
+        $this->escapeChar = '\\';
+        $this->quoteChar = '"';
+        $this->suppressHeader = false; 
         $this->autoTrim = false;
-        $this->escapeCharacter = null;
-        $this->quoteCharacter = '"';
     }
     
     function columns(array $columns) {
         $ret = clone $this;
         $ret->columns = $columns;
-        return ret;
+        return $ret;
     }
 
     function delimiter($delimiter) {
@@ -26,9 +31,42 @@ class CSVFormat {
         return $ret;
     }
 
+    function escapeChar($escapeChar) {
+        $ret = clone $this;
+        $ret->escapeChar = $escapeChar;
+        return $ret;
+    }
+
+    function quoteChar($quoteChar) {
+        $ret = clone $this;
+        $ret->quoteChar = $quoteChar;
+        return $ret;
+    }
+    
+    function suppressHeader($suppressHeader = true) {
+        $ret = clone $this;
+        $ret->suppressHeader = $suppressHeader;
+        return $ret;
+    }
+
     function autoTrim($autoTrim) {
         $ret = clone $this;
         $ret->autoTrim = $autoTrim;
         return $ret;
+    }
+    
+    function getParams() {
+        return [
+            'columns' => $this->columns,
+            'delimiter' => $this->delimiter,
+            'escapeChar'=> $this->escapeChar,
+            'quoteChar' => $this->quoteChar,
+            'suppressHeader' => $this->suppressHeader,
+            'autoTrim' => $this->autoTrim
+        ];
+    }
+    
+    static function create() {
+        return new self();
     }
 }

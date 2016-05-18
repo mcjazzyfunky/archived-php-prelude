@@ -43,5 +43,3 @@ class FileReaderTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($lines, ['a', 'b', 'c']);
     }
 }
-
-
