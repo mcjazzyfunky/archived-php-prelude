@@ -13,15 +13,24 @@ use prelude\util\Seq;
 final class CSVExporter {
     private $format;
     private $mapper;
+    private $sourceCharset;
+    private $targetCharset;
 
     private function __construct() {
         $this->format = CSVFormat::create();
         $this->mapper = null;
+        $this->sourceCharset = 'UTF-8';
+        $this->targetCharset = 'UTF-8';
     }
     
     function format(CSVFormat $format) {
-        $ret = clone $this;
-        $ret->format = $format;
+        $ret = $this;
+        
+        if ($format !== $this->format) {
+            $ret = clone $this;
+            $ret->format = $format;
+        }
+
         return $ret;
     }
     
@@ -31,6 +40,28 @@ final class CSVExporter {
         if ($mapper !== $this->mapper) {
             $ret = clone $this;
             $ret->mapper = $mapper;
+        }
+        
+        return $ret;
+    }
+    
+    function sourceCharset($sourceCharset) {
+        $ret = $this;
+        
+        if ($sourceCharset !== $this->sourceCharset) {
+            $ret = clone $this;
+            $ret->sourceCharset = $sourceCharset;
+        }
+        
+        return $ret;
+    }
+
+    function targetCharset($targetCharset) {
+        $ret = $this;
+        
+        if ($targetCharset !== $this->targetCharset) {
+            $ret = clone $this;
+            $ret->targetCharset = $targetCharset;
         }
         
         return $ret;
@@ -86,6 +117,10 @@ final class CSVExporter {
                             $value = null; // TODO - throw an exception
                         } else if ($autoTrim) {
                             $value = trim($value);
+                        }
+                        
+                        if ($this->sourceCharset !== $this->targetCharset) {
+                            $value = $this->convertCharset($value);
                         }
                         
                         if ($columns === null) {
@@ -147,5 +182,9 @@ final class CSVExporter {
                 });
 
         return $ret;
+    }
+    
+    private function convertCharset($value) {
+        return mb_convert_encoding($value, $this->targetCharset, $this->sourceCharset);
     }
 }

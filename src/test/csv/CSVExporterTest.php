@@ -42,7 +42,7 @@ class CSVExporterTest extends PHPUnit_Framework_TestCase {
             CSVExporter::create()
                 ->format($format)
                 ->mapper(function ($rec, $idx) {
-                    // Simulate twins in Vienna - just for a test ;-)
+                    // Add some twins in Vienna - just for a test ;-)
                     $rec2 = $rec;
                     $rec2['LAST_NAME'] = 'Doppelganger';
                     $rec2['CITY'] = 'Vienna';
@@ -50,8 +50,15 @@ class CSVExporterTest extends PHPUnit_Framework_TestCase {
                     
                     return Seq::from([$rec, $rec2]);
                 })
+                ->sourceCharset('UTF-8')
+                ->targetCharset('ISO-8859-1')
                 ->export(
                     FileWriter::fromFile('php://stdout'),
                     Seq::from($recs));
     }
 }
+
+
+
+
+
