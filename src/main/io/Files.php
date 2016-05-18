@@ -2,11 +2,6 @@
 
 namespace prelude\io;
 
-require_once dirname(__FILE__) . '/File.php';
-require_once dirname(__FILE__) . '/IOException.php';
-require_once dirname(__FILE__) . '/internal/FileImpl.php';
-require_once dirname(__FILE__) . '/../util/Seq.php';
-
 use InvalidArgumentException;
 use prelude\io\internal\FileImpl;
 use prelude\util\Seq;

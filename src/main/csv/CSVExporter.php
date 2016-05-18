@@ -2,10 +2,6 @@
 
 namespace prelude\csv;
 
-require_once __DIR__ . '/CSVFormat.php';
-require_once __DIR__ . '/../io/FileWriter.php';
-require_once __DIR__ . '/../util/Seq.php';
-
 use InvalidArgumentException;
 use prelude\io\FileWriter;
 use prelude\util\Seq;

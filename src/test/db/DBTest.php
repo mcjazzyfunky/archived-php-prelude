@@ -2,11 +2,7 @@
 
 namespace prelude\db;
 
-require_once __DIR__ . '/../../main/db/DBManager.php';
-require_once __DIR__ . '/../../main/log/Logger.php';
-require_once __DIR__ . '/../../main/log/Log.php';
-require_once __DIR__ . '/../../main/log/adapters/StreamLoggerAdapter.php';
-require_once __DIR__ . '/../../main/log/adapters/FileLoggerAdapter.php';
+require_once __DIR__ . '/../../../prelude.php';
 
 use Exception;
 use PHPUnit_Framework_TestCase;
@@ -16,7 +12,7 @@ use prelude\log\adapters\StreamLoggerAdapter;
 use prelude\log\adapters\FileLoggerAdapter;
 
 // this has normally to be handled in the loading script
-error_reporting(E_ALL);
+
 Logger::setAdapter(new StreamLoggerAdapter(STDOUT));
 //Logger::setAdapter(new FileLoggerAdapter('./test-{date}.log'));
 Logger::setDefaultLogLevel(Log::INFO);

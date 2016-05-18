@@ -2,10 +2,7 @@
 
 namespace prelude\io;
 
-require_once __DIR__ . '/../../main/io/PathScanner.php';
-require_once __DIR__ . '/../../main/io/FileComparators.php';
-
-error_reporting(E_ALL);
+require_once __DIR__ . '/../../../prelude.php';
 
 use PHPUnit_Framework_TestCase;
 

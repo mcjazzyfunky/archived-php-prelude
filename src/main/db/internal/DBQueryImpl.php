@@ -2,15 +2,10 @@
 
 namespace prelude\db\internal;
 
-require_once __DIR__ . '/../DBQuery.php';
-require_once __DIR__ . '/../internal/DBAdapter.php';
-require_once __DIR__ . '/../../util/Seq.php';
-require_once __DIR__ . '/../../util/ValueObject.php';
-
 use PDO;
 use prelude\db\DB;
-use prelude\DB\DBQuery;
-use prelude\DB\internal\DBAdapter;
+use prelude\db\DBQuery;
+use prelude\db\internal\DBAdapter;
 use prelude\util\Seq;
 use prelude\util\ValueObject;
 

@@ -2,17 +2,12 @@
 
 namespace prelude\csv;
 
-require_once __DIR__ . '/../../main/csv/CSVExporter.php';
-require_once __DIR__ . '/../../main/csv/CSVFormat.php';
-require_once __DIR__ . '/../../main/io/FileWriter.php';
-require_once __DIR__ . '/../../main/util/Seq.php';
+require_once __DIR__ . '/../../../prelude.php';
 
 use Exception;
 use PHPUnit_Framework_TestCase;
 use prelude\util\Seq;
 use prelude\io\FileWriter;
-
-error_reporting(E_ALL);
 
 class CSVExporterTest extends PHPUnit_Framework_TestCase {
     function testRun() {

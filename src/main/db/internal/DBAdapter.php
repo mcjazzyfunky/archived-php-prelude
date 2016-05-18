@@ -2,8 +2,6 @@
 
 namespace prelude\db\internal;
 
-require_once __DIR__ . '/../../util/Seq.php';
-
 use prelude\util\Seq;
 
 interface DBAdapter {

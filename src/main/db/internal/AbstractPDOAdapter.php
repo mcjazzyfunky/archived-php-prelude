@@ -2,11 +2,6 @@
 
 namespace prelude\db\internal;
 
-
-require_once __DIR__ . '/DBAdapter.php';
-require_once __DIR__ . '/../DBException.php';
-require_once __DIR__ . '/../../util/Seq.php';
-
 use PDO;
 use PDOException;
 use prelude\db\DBException;

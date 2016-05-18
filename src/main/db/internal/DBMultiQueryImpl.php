@@ -2,11 +2,6 @@
 
 namespace prelude\db\internal;
 
-require_once __DIR__ . '/../DB.php';
-require_once __DIR__ . '/../DBMultiQuery.php';
-require_once __DIR__ . '/../internal/DBAdapter.php';
-require_once __DIR__ . '/../../util/Seq.php';
-
 use prelude\db\DB;
 use prelude\db\DBMultiQuery;
 use prelude\db\internal\DBAdapter;

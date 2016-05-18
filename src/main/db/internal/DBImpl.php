@@ -2,15 +2,6 @@
 
 namespace prelude\db\internal;
 
-require_once __DIR__ . '/adapters/PDOSQLiteAdapter.php';
-require_once __DIR__ . '/adapters/PDOMySQLAdapter.php';
-require_once __DIR__ . '/DBMultiQueryImpl.php';
-require_once __DIR__ . '/DBQueryImpl.php';
-require_once __DIR__ . '/../DB.php';
-require_once __DIR__ . '/../DBException.php';
-require_once __DIR__ . '/../DBQuery.php';
-require_once __DIR__ . '/../../util/Seq.php';
-
 use InvalidArgumentException;
 use PDO;
 use prelude\db\DB;

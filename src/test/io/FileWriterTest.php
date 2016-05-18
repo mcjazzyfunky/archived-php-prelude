@@ -2,12 +2,9 @@
 
 namespace prelude\io;
 
-require_once __DIR__ . '/../../main/util/Seq.php';
-require_once __DIR__ . '/../../main/io/FileWriter.php';
+require_once __DIR__ . '/../../../prelude.php';
 
 use prelude\util\Seq;
-
-error_reporting(E_ALL);
 
 class FileWriterTest extends \PHPUnit_Framework_TestCase {
     function testMethodWriteFull() {

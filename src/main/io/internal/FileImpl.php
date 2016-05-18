@@ -2,9 +2,6 @@
 
 namespace prelude\io\internal;
 
-require_once __DIR__ . '/../File.php';
-require_once __DIR__ . '/../Files.php';
-
 use InvalidArgumentException;
 use prelude\io\File;
 use prelude\io\Files;

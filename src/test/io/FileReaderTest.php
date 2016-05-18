@@ -2,13 +2,9 @@
 
 namespace prelude\io;
 
-require_once __DIR__ . '/../../main/util/Seq.php';
-require_once __DIR__ . '/../../main/io/File.php';
-require_once __DIR__ . '/../../main/io/FileReader.php';
+require_once __DIR__ . '/../../../prelude.php';
 
 use prelude\util\Seq;
-
-error_reporting(E_ALL);
 
 class FileReaderTest extends \PHPUnit_Framework_TestCase {
     function testMethodReadFull() {

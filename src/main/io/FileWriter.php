@@ -2,11 +2,6 @@
 
 namespace prelude\io;
 
-require_once(__DIR__ . '/File.php');
-require_once(__DIR__ . '/Files.php');
-require_once(__DIR__ . '/IOException.php');
-require_once(__DIR__ . '/../util/Seq.php');
-
 use Closure;
 use InvalidArgumentException;
 use prelude\util\Seq;

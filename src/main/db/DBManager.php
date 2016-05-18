@@ -2,10 +2,6 @@
 
 namespace prelude\db;
 
-require_once __DIR__ . '/internal/DBImpl.php';
-require_once __DIR__ . '/../util/Seq.php';
-require_once __DIR__ . '/../util/ValueObject.php';
-
 use PDO;
 use prelude\db\internal\DBImpl;
 

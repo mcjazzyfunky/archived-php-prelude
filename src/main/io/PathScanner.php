@@ -2,9 +2,6 @@
 
 namespace prelude\io;
 
-require_once __DIR__ . '/Files.php';
-require_once __DIR__ . '/../util/Seq.php';
-
 use InvalidArgumentException;
 use prelude\util\Seq;
 
