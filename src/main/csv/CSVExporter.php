@@ -92,8 +92,8 @@ final class CSVExporter {
                             $newMap[$idx] = $value;
                         } else {
                             if (is_numeric($key)) {
-                                if ($idx < count($newMap)) {
-                                    $newMap[(int)$idx] = $value;
+                                if ($key < count($newMap)) {
+                                    $newMap[(int)$key] = $value;
                                 }
                             } else {
                                 $targetIdx = @$columnNameToIndexMap[$key];

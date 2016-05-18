@@ -16,11 +16,14 @@ error_reporting(E_ALL);
 
 class CSVExporterTest extends PHPUnit_Framework_TestCase {
     function testRun() {
+        
+        // Please be aware that the following recordsets vary
+        // structurally
         $recs = [
-            ['LAST_NAME' => 'Allen',
-             'FIRST_NAME' => 'Iverson',
-             'Hampton',
-             'USA'],
+            ['LAST_NAME' => 'Iverson',
+             'FIRST_NAME' => 'Allen',
+             'CITY' => 'Hampton',
+             'COUNTRY' => 'USA'],
             ['FIRST_NAME' => 'Dirk',
              'LAST_NAME' => 'Nowitzki',
              'CITY' => 'Wuerzburg',
@@ -50,7 +53,5 @@ class CSVExporterTest extends PHPUnit_Framework_TestCase {
                 ->export(
                     FileWriter::fromFile('php://stdout'),
                     Seq::from($recs));
-                
-        flush();
     }
 }
