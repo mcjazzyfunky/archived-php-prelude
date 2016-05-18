@@ -19,11 +19,13 @@ final class LogUtils {
         Log::ERROR => 'ERROR',
         Log::CRITICAL => 'CRITICAL',
         Log::ALERT => 'ALERT',
-        Log::FATAL => 'FATAL'
+        Log::FATAL => 'FATAL',
+        Log::NONE => 'NONE'
     ];
     
-    static function isValidLogLevel($level) {
-        return $level >= Log::TRACE && $level <= Log::FATAL;
+    static function isValidLogLevel($level, $excludeLevelNone = false) {
+        return $level >= Log::TRACE && $level <= Log::FATAL
+            || $level === Log::NONE && !$excludeLevelNone;
     }
     
     static function getLogLevelName($level) {

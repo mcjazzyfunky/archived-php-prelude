@@ -11,7 +11,7 @@ use \Closure;
 use InvalidArgumentException;
 use prelude\util\Seq;
 
-final class TextReader {
+final class FileReader {
     private $openFile;
 
     private function __construct(Closure $openFile) {

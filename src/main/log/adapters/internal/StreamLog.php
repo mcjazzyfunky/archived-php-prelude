@@ -24,7 +24,7 @@ class StreamLog extends AbstractLog {
     
     function log($level, $message, $args = null, $cause = null, $extra = null) {
         if ($level !== LOG::NONE) {
-            if (!LogUtils::isValidLogLevel($level)) {
+            if (!LogUtils::isValidLogLevel($level, true)) {
                 throw new InvalidArgumentException(
                     '[StreamLog::log] First argument $level must be a '
                     . 'valid log level');

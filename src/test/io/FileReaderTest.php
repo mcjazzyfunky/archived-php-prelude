@@ -4,27 +4,27 @@ namespace prelude\io;
 
 require_once __DIR__ . '/../../main/util/Seq.php';
 require_once __DIR__ . '/../../main/io/File.php';
-require_once __DIR__ . '/../../main/io/TextReader.php';
+require_once __DIR__ . '/../../main/io/FileReader.php';
 
 use prelude\util\Seq;
 
 error_reporting(E_ALL);
 
-class TextReaderTest extends \PHPUnit_Framework_TestCase {
+class FileReaderTest extends \PHPUnit_Framework_TestCase {
     function testMethodReadFull() {
         $filename = tempnam(sys_get_temp_dir(), 'txt');
         
         file_put_contents($filename, "a\nb\nc");
         
         $content =
-            TextReader::fromFile($filename)
+            FileReader::fromFile($filename)
                 ->readFull();
         
         $this->assertEquals($content, "a\nb\nc");
         
         
         $content =
-            TextReader::fromString('this is a test')
+            FileReader::fromString('this is a test')
                 ->readFull();
                 
         $this->assertEquals($content, 'this is a test');
@@ -36,7 +36,7 @@ class TextReaderTest extends \PHPUnit_Framework_TestCase {
         
         file_put_contents($filename, "a\r\nb\r\nc");
         
-        $lines = TextReader::fromFile($filename)
+        $lines = FileReader::fromFile($filename)
             ->readSeq()
             ->toArray();
 

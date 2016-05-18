@@ -11,16 +11,30 @@ use Closure;
 use InvalidArgumentException;
 use prelude\util\Seq;
 
-final class TextWriter {
+final class FileWriter {
     private $openFile;
+    private $append;
     
     private function __construct(Closure $openFile) {
         $this->openFile = $openFile;
+        $this->append = false;
+    }
+    
+    function append($append = true) {
+        $ret = $this;
+        
+        if ($this->append !== $append) {
+            $ret = clone $this;
+            $ret->append = $append;
+            return $ret;
+        }
+        
+        return $ret;
     }
     
     function open() {
         $openFile = $this->openFile;
-        return $openFile();
+        return $openFile($this);
     }
     
     function writeFull($text) {
@@ -73,8 +87,13 @@ final class TextWriter {
     static function fromFile($file, array $context = null) {
         $path = Files::getPath($file);
         
-        $openFile = function () use ($path, $context) {
-            return Files::openFile($path, 'wb', $context);
+        $openFile = function ($FileWriter) use ($path, $context) {
+            $openMode =
+                $FileWriter->append
+                ? 'ab'
+                : 'wb';
+            
+            return Files::openFile($path, $openMode, $context);
         };
         
         return new self($openFile);
