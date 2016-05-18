@@ -17,15 +17,15 @@ error_reporting(E_ALL);
 class CSVExporterTest extends PHPUnit_Framework_TestCase {
     function testRun() {
         $recs = [
-            ['LAST_NAME' => 'Doe',
-             'FIRST_NAME' => 'John',
-             'Seattle',
+            ['LAST_NAME' => 'Allen',
+             'FIRST_NAME' => 'Iverson',
+             'Hampton',
              'USA'],
-            ['FIRST_NAME' => 'Jane',
-             'LAST_NAME' => 'Whoever',
-             'CITY' => 'London',
-             'COUNTRY' => 'USA'],
-            ['Jim', 'Gym', 'Sidney', 'Australia', 'This field will not be exported']
+            ['FIRST_NAME' => 'Dirk',
+             'LAST_NAME' => 'Nowitzki',
+             'CITY' => 'Wuerzburg',
+             'COUNTRY' => 'Germany'],
+            ['Michael "Air"', 'Jordan', 'New York', 'USA', 'This field will not be exported']
         ];
         
         $format =
@@ -38,8 +38,14 @@ class CSVExporterTest extends PHPUnit_Framework_TestCase {
         $exporter =
             CSVExporter::create()
                 ->format($format)
-                ->mapper(function ($rec,$idx) {
-                    return Seq::from([$rec, $rec]);
+                ->mapper(function ($rec, $idx) {
+                    // Simulate twins in Vienna - just for a test ;-)
+                    $rec2 = $rec;
+                    $rec2['LAST_NAME'] = 'Doppelganger';
+                    $rec2['CITY'] = 'Vienna';
+                    $rec2['COUNTRY'] = 'Austria';
+                    
+                    return Seq::from([$rec, $rec2]);
                 })
                 ->export(
                     FileWriter::fromFile('php://stdout'),

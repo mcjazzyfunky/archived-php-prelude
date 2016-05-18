@@ -41,7 +41,7 @@ final class CSVExporter {
         $columns = $params['columns'];
         $delimiter = $params['delimiter'];
         $quoteChar = $params['quoteChar']; 
-        $escapeChar = $params['escapeChar']; 
+//        $escapeChar = $params['escapeChar']; 
         $suppressHeader = $params['suppressHeader'];
         $autoTrim = $params['autoTrim'];
         $stream = $writer->open();
@@ -58,13 +58,16 @@ final class CSVExporter {
                     $stream,
                     $columns,
                     $delimiter,
-                    $quoteChar,
-                    $escapeChar);
+                    $quoteChar
+/*
+                    ,$escapeChar
+*/
+                    );
             }
             
             foreach ($recs as $item) {
                 if (!($item instanceof Seq)) {
-                    $tem = Seq::of($rec);
+                    $item = Seq::of($item);
                 }
                 
                 foreach ($item as $rec) {
@@ -106,8 +109,12 @@ final class CSVExporter {
                         $stream,
                         $newMap,
                         $delimiter,
-                        $quoteChar,
-                        $escapeChar);
+                        $quoteChar
+                        
+/*
+                        ,$escapeChar
+*/
+                        );
                         
                     fflush($stream);
                 }
@@ -121,7 +128,7 @@ final class CSVExporter {
         return new self();
     }
     
-    private function applyMapper($recs) {
+    private function applyMapper(Seq $recs) {
         $ret = $recs;
         
         if ($this->mapper !== null) {
@@ -130,12 +137,15 @@ final class CSVExporter {
                     ->map(function ($rec, $idx) {
                         $mapper = $this->mapper;
                         return $mapper($rec, $idx);
-                    })
-                    ->filter(function ($item) {
-                        return is_array($item) || $item instanceof Seq;
                     });
         }
         
+        $ret =
+            $ret
+                ->filter(function ($item) {
+                    return is_array($item) || $item instanceof Seq;
+                });
+
         return $ret;
     }
 }
