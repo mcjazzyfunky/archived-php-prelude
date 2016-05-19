@@ -127,13 +127,13 @@ And many, many other sequence operations .....
 
 # Scanning directories
 
-Scanning a directory for certain files or subdirectories
+Scanning a directory for certain files or subdirectories (method 'scan' will return a lazy sequence)
 
 ```php
 PathScanner::create()
 	->recursive()
 	->includeFiles(['*.php', '*.json'])
-	->excludeFiles('*tmp*')
+	->excludeFiles(['*tmp*', '*temp*'])
 	->excludeLinks()
 	->forceAbsolute() // list absolute paths
 	->sort(FileComparators::byFileSize())
@@ -142,13 +142,37 @@ PathScanner::create()
 	->toArray();
 // Result: An array of all PHP and JSON file paths as strings in the
 // current directory (including files in the subdirectories),
-// excluding symbolic links 
+// excluding temporary files and symbolic links,
+// sorted by file size (ascending)
 ```
 
 # File input and output
 
 FIle operation without the need to handle file pointers aka. stream explicitly:
 No need to open or close resources.
+
+Reading a file line by line (lazily)
+```php
+$lines =
+    FileReader::from('input.txt')
+        ->readSeq();
+
+foreach ($lines as $Line) {
+    print $line . "\n";
+}
+// Reads and prints out the content of the input file line by line
+```
+Reading a file completely to a string
+```php
+$content =
+    FileReader::from('input.txt')
+        ->readFull();
+// The whole content will be read and returned.
+// Similar to function file_get_contents, but will throw
+// an IOException on error.
+```
+
+Writing to files
 
 ```php
 $lines =
@@ -159,7 +183,7 @@ $lines =
 
 FileWriter::fromFile('output.txt')
     ->writeSeq($lines);
-// Will write 99 lines to the file:
+// Write 99 lines to the file:
 // "Line 1", "Line2", "Line3" etc.
 ```
 Appendng a concrete text to the file
@@ -168,4 +192,57 @@ Appendng a concrete text to the file
 FileWriter::fromFile('output.txt')
     ->append()
     ->writeFull('This text will be appended to the existing file');
+```
+
+# CSV exports
+
+```php
+// Please be aware that the following recordsets vary
+// structurally
+$recs = [
+    ['LAST_NAME' => 'Iverson',
+     'FIRST_NAME' => 'Allen',
+     'CITY' => 'Hampton',
+     'COUNTRY' => 'USA'],
+     
+    ['FIRST_NAME' => 'Dirk',
+     'LAST_NAME' => 'Nowitzki',
+     'CITY' => 'Wuerzburg',
+     'COUNTRY' => 'Germany'],
+    
+    ['Michael "Air"', 'Jordan', 'New York',
+     'USA', 'This field will not be exported']
+];
+
+$format =
+    CSVFormat::create()
+        ->columns(['FIRST_NAME', 'LAST_NAME', 'CITY', 'COUNTRY'])
+        ->delimiter(';')
+        ->quoteChar('"');
+
+CSVExporter::create()
+    ->format($format)
+    ->mapper(function ($rec) {
+        // Add some twins in Vienna - just because we can  ;-)
+        $rec2 = $rec;
+        $rec2['LAST_NAME'] = 'Doppelganger';
+        $rec2['CITY'] = 'Vienna';
+        $rec2['COUNTRY'] = 'Austria';
+        
+        return Seq::from([$rec, $rec2]);
+    })
+    ->sourceCharset('UTF-8')
+    ->targetCharset('ISO-8859-1')
+    ->export(
+        FileWriter::fromFile('php://stdout'),
+        Seq::from($recs));
+            
+// Will print out the following CSV formatted records to stdout:
+// FIRST_NAME;LAST_NAME;CITY;COUNTRY
+// Allen;Iverson;Hampton;USA
+// Allen;Doppelganger;Vienna;Austria
+// Dirk;Nowitzki;Wuerzburg;Germany
+// Dirk;Doppelganger;Vienna;Austria
+// "Michael ""Air""";Jordan;"New York";USA
+// "Michael ""Air""";Doppelganger;Vienna;Austria
 ```
