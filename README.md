@@ -5,9 +5,9 @@ A PHP library to make the daily programming much easier by providing a facade AP
 
 - Lazy sequencing
 - Database access
-- CSV exporting
-- File input/output
 - Directory scanning
+- File input/output
+- CSV exports
 - etc.
 
 # Lazy sequences
@@ -24,14 +24,14 @@ Seq::range(1, 5);
 // Result: <1, 2, 3, 4> (right value is excluded)
 ```
 
-Sequences are lazy: The enumeration will only performed as far as really needed
+Sequences are really lazy: The enumeration will only be performed as far as really needed
 ```php
 Seq::range(1, 1000000000)
 	->take(10)
 	->max()
 // Result: 10 (only 10 values have been enumerated)
 ```
-Building array of first 10 fibonacci numbers
+Building an array of first 10 fibonacci numbers
 ```php
 Seq::iterate([1, 1], function ($a, $b) {
         return $a + $b;
@@ -40,7 +40,7 @@ Seq::iterate([1, 1], function ($a, $b) {
     ->toArray()
 // Result: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 ```
-Creating a sequence based on a generator function
+Creating a lazy sequence based on a generator function
 ```php
 Seq::from(function () {
 	for ($i = 0; $i < 1000000000; +$i) {
@@ -84,7 +84,7 @@ Limiting sequences
 Seq::range(1, 100)
     ->skip(5)
     ->take(10)
-// Result: <5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15>
+// Result: <6, 7, 8, 9, 10, 11, 12, 13, 14, 15>
 ```
 
 Concatenating sequences
@@ -103,7 +103,7 @@ Seq::concatMany([$seq1, $seq2, $seq3])
 Flattening sequences
 ```php
 $seq = Seq::from([Seq::from([1, 2, 3]), $Seq::from([4, 5, 6])])
-Seq::flatten($seq)
+$seq->flatten()
 // Result: <1, 2, 3, 4, 5, 6>
 ```
 
@@ -122,9 +122,51 @@ $seq->each(function ($n) {
 });
 ```
 
-And many, many other sequence operations .....
+And many, many other sequence operations (see API documentation for details) .....
 
+# Database access
 
+Executing query:
+
+```php
+$database
+    ->query('delete from user')
+	->execute()
+// Will clear table 'user'
+```
+Executing with binding
+
+```php
+$userId = 12345;
+
+$database
+    ->query('delete from user where id=?')
+    ->bind($userId)
+	->execute();
+// Will delete the record of user 12345
+```
+```php
+$database
+    ->query('delete from user where city=:city and country=:country')
+    ->bind(['city' => 'Seattle', 'country' => 'USA')
+	->execute();
+// Will delete all users from Seattle
+```
+
+Inserting many records  with the same query (internally, prepared statements will be used)
+```php
+
+$users = [
+    [1, 'John', 'Doe', 'Boston', 'USA'],
+	[2, 'Jane', 'Whoever', 'Portland', 'USA']];
+
+$database
+    ->multiQuery('insert into user values (?, ?, ?, ?, ?)')
+    ->bindMany($users) // also lazy sequences would be allowed here
+    ->process();
+// will insert two user records to table 'user'
+
+```
 # Scanning directories
 
 Scanning a directory for certain files or subdirectories (method 'scan' will return a lazy sequence)
@@ -238,6 +280,7 @@ CSVExporter::create()
         Seq::from($recs));
             
 // Will print out the following CSV formatted records to stdout:
+
 // FIRST_NAME;LAST_NAME;CITY;COUNTRY
 // Allen;Iverson;Hampton;USA
 // Allen;Doppelganger;Vienna;Austria
