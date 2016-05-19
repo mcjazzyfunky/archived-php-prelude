@@ -2,7 +2,7 @@
 
 namespace prelude\db;
 
-require_once __DIR__ . '/../../../prelude.php';
+require_once __DIR__ . '/../../../include.php';
 
 use Exception;
 use PHPUnit_Framework_TestCase;
@@ -28,7 +28,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
     function testRun() {
         // The registry pattern is not really the coolest :-(
         DBManager::registerDB('shop', ['dsn' => 'sqlite::memory:']);
-        DBManager::registerDB('shop', ['dsn' => 'mysql:host=localhost;dbname=test', 'username' => 'root']);
+       // DBManager::registerDB('shop', ['dsn' => 'mysql:host=localhost;dbname=test', 'username' => 'root']);
         
         $newUsers = [[
             'id' => 1001,

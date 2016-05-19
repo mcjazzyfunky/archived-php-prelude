@@ -2,7 +2,7 @@
 
 namespace prelude\io;
 
-require_once __DIR__ . '/../../../prelude.php';
+require_once __DIR__ . '/../../../include.php';
 
 use prelude\util\Seq;
 

@@ -2,7 +2,7 @@
 
 namespace prelude\csv;
 
-require_once __DIR__ . '/../../../prelude.php';
+require_once __DIR__ . '/../../../include.php';
 
 use Exception;
 use PHPUnit_Framework_TestCase;

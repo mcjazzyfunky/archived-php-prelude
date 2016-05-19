@@ -61,8 +61,10 @@ abstract class AbstractPDOAdapter implements DBAdapter {
         $qry = $this->limitQuery($query, $limit, $offset);
         
         return Seq::from(function () use ($qry, $bindings) {
+            $stmt = null;
+            $conn = $this->getConnection();
+            
             try {
-                $conn = $this->getConnection();
                 $stmt = $conn->prepare($qry, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
             
                 $result = $stmt->execute($bindings);
@@ -73,7 +75,9 @@ abstract class AbstractPDOAdapter implements DBAdapter {
             } catch (PDOException $e) {
                 throw new DBException($e->getMessage(), $e->getCode(), $e);
             } finally {
-                $stmt->closeCursor();
+                if ($stmt !== null) {
+                    $stmt->closeCursor();
+                }
             }
         });
     }
