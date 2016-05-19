@@ -134,7 +134,7 @@ $database
 	->execute()
 // Will clear table 'user'
 ```
-Executing with binding
+Executing query with binding
 
 ```php
 $userId = 12345;
@@ -155,7 +155,6 @@ $database
 
 Inserting many records  with the same query (internally, prepared statements will be used)
 ```php
-
 $users = [
     [1, 'John', 'Doe', 'Boston', 'USA'],
 	[2, 'Jane', 'Whoever', 'Portland', 'USA']];
@@ -164,9 +163,76 @@ $database
     ->multiQuery('insert into user values (?, ?, ?, ?, ?)')
     ->bindMany($users) // also lazy sequences would be allowed here
     ->process();
-// will insert two user records to table 'user'
-
+// will insert two new user records to table 'user'
 ```
+
+Fetch a single value
+```php
+$database
+	->query('select count(*) from user where country=:0 and city=:1')
+	->bind([$country, $city])
+	->fetchSingle()
+// Result: Number of matching records
+```
+
+Fetch an array of numeric arrays
+```php
+$database
+    ->query('select id, firstName, lastName from user where country=?')
+    ->bind($country)
+    ->fetchRows()
+
+// Result: Something like [[111, 'John', 'Doe'], [222, 'Jane', 'Whoever'], ...]
+```
+
+Fetch an array of associative arrays
+```php    
+$databse
+    ->query('select id, firstName, lastName from user where country=?)',
+    ->bind($country)
+    ->fetchRecs()
+// Result:
+// [['id' => 111, 'firstName' => 'John', 'lastName' => 'Doe'],
+//  ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'], ...]
+```
+
+Fetch a lazy sequence of numeric arrays
+```php
+$database
+    ->query('select * from user where country=:0 and city=:1')
+    ->bind([$country, $city])
+    ->fetchSeqOfRows()
+// Result:
+//    <[111, 'John', 'Doe'],
+//     [222, 'Jane', 'Whoever'], ...>
+```
+
+Fetch a lazy sequence of associative arrays
+```php        
+$db->getSeqOfRecs(
+    'select id, firstName, lastName from user where country=:0 and city=:1',
+    [$country, $city]);
+// Result:
+//    <['id' => 111, 'firstName' => 'John', 'lastName' => 'Doe'],
+//     ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'], ...>
+```
+
+Fetching a lazy sequence of dynamic value objects
+
+```php
+$users = 
+    $database
+        ->query('select id, firstName, lastName from user where country=?',
+        ->bind($country)
+        ->limit(100)
+        ->fetchSeqOfVOs();
+    
+foreach ($user as $user) {
+    print $user->id . ': ' . $user->firstName . ' ' . $user->lastName . "\n";
+}
+// Prints out the first 100 users from the selected country
+```
+
 # Scanning directories
 
 Scanning a directory for certain files or subdirectories (method 'scan' will return a lazy sequence)
@@ -204,14 +270,25 @@ foreach ($lines as $Line) {
 }
 // Reads and prints out the content of the input file line by line
 ```
-Reading a file completely to a string
+Reading a file completely into a string
 ```php
 $content =
     FileReader::from('input.txt')
-        ->readFull();
+        ->readFully();
 // The whole content will be read and returned.
 // Similar to function file_get_contents, but will throw
 // an IOException on error.
+```
+
+Determine the number of "error" lines in a certain log file.
+```php
+$errorLineCount =
+    FileReader::fromFilename('path/to/logs/app.log')
+        ->readLines()
+        ->filter(function ($line) {
+            return stripos($line, 'error') !== false);
+        })
+        ->count();
 ```
 
 Writing to files
@@ -233,7 +310,7 @@ Appendng a concrete text to the file
 ```php
 FileWriter::fromFile('output.txt')
     ->append()
-    ->writeFull('This text will be appended to the existing file');
+    ->writeFully('This text will be appended to the existing file');
 ```
 
 # CSV exports
