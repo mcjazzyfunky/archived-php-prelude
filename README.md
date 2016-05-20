@@ -3,7 +3,7 @@
 
 A PHP library that makes daily programming much easier by providing concise facade APIs for some important aspects of application development
 
-# Table of Contents
+# Contents
 * [Introduction](#introduction)
   * [Motivation](#lazy-sequence)
   * [Installation](#installation)
@@ -488,7 +488,7 @@ CSVExporter::create()
 // "Michael ""Air""";Doppelganger;Vienna;Austria
 ```
 
-# 3. Miscellaneous
+# Miscellaneous
 
 ## Project status
 
