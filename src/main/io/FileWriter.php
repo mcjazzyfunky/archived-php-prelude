@@ -32,7 +32,7 @@ final class FileWriter {
         return $openFile($this);
     }
     
-    function writeFull($text) {
+    function writereadFully($text) {
         if (!is_string($text)) {
             throw new InvalidArgumentException(
                 '[FileWriter#writeFull] First argument $text must be a string');

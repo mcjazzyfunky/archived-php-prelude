@@ -3,12 +3,13 @@
 
 A PHP library to make the daily programming much easier by providing a facade API for some important aspects of application development:
 
-- Lazy sequencing
-- Database access
-- Directory scanning
-- File input/output
-- CSV exports
-- etc.
+# Table of Contents
+1. [Lazy sequencing](#lazy-sequences)
+2. [Dynamic objects](#dynamic-objects)
+3. [Database access](#database-access)
+1. [Scanning directories](#scanning-directories)
+2. [File input and output](#file-input-and-output)
+3. [CSV exports](#csv-exports)
 
 # Lazy sequences
 
@@ -46,7 +47,7 @@ Seq::from(function () {
 	for ($i = 0; $i < 1000000000; +$i) {
 		yield $i;
 	}
-}
+});
 ```
 
 Empty sequence
@@ -122,7 +123,26 @@ $seq->each(function ($n) {
 });
 ```
 
-And many, many other sequence operations (see API documentation for details) .....
+And many other sequence operations (see API documentation for details) .....
+
+# Dynamic objects
+
+Instead of handling records in associative arrays, it's possible to use dynamic objects where each property can be accessed using "->" arrow.
+The advantage is that this is syntactically much nicer and a it will throw a RuntimeException in case that someone will try to read a property that does not exist.
+The disadvantage is that dynamic objects use PHP's magic functions internally which is much slower than accessing values in an associative array.
+
+```php
+$user = new DynObject([
+    'firstName' => 'John',
+    'lastName' => 'Doe';
+]);
+
+$user->city = 'Seattle';
+$user->country = 'USA';
+
+print "$user->firstName $user->lastName, $user->city $user->country";
+// Prints out: John Doe, Seattle USA
+```
 
 # Database access
 
@@ -131,10 +151,10 @@ Executing query:
 ```php
 $database
     ->query('delete from user')
-	->execute()
+	->execute();
 // Will clear table 'user'
 ```
-Executing query with binding
+Executing query with bindings
 
 ```php
 $userId = 12345;
@@ -148,7 +168,7 @@ $database
 ```php
 $database
     ->query('delete from user where city=:city and country=:country')
-    ->bind(['city' => 'Seattle', 'country' => 'USA')
+    ->bind(['city' => 'Seattle', 'country' => 'USA'])
 	->execute();
 // Will delete all users from Seattle
 ```
@@ -182,7 +202,7 @@ $database
     ->bind($country)
     ->fetchRows()
 
-// Result: Something like [[111, 'John', 'Doe'], [222, 'Jane', 'Whoever'], ...]
+// Result: [[111, 'John', 'Doe'], [222, 'Jane', 'Whoever'], ...]
 ```
 
 Fetch an array of associative arrays
@@ -209,15 +229,16 @@ $database
 
 Fetch a lazy sequence of associative arrays
 ```php        
-$db->getSeqOfRecs(
-    'select id, firstName, lastName from user where country=:0 and city=:1',
-    [$country, $city]);
+$database
+    ->query('select id, firstName, lastName from user where country=?')
+    ->bind($country)
+    ->fetchSeqOfRecs()
 // Result:
 //    <['id' => 111, 'firstName' => 'John', 'lastName' => 'Doe'],
 //     ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'], ...>
 ```
 
-Fetching a lazy sequence of dynamic value objects
+Fetching a lazy sequence of dynamic objects
 
 ```php
 $users = 
@@ -225,7 +246,7 @@ $users =
         ->query('select id, firstName, lastName from user where country=?',
         ->bind($country)
         ->limit(100)
-        ->fetchSeqOfVOs();
+        ->fetchSeqOfDynObjects();
     
 foreach ($user as $user) {
     print $user->id . ': ' . $user->firstName . ' ' . $user->lastName . "\n";
@@ -258,6 +279,7 @@ PathScanner::create()
 
 FIle operation without the need to handle file pointers aka. stream explicitly:
 No need to open or close resources.
+Each IO operation will throw an IOException on error, that means that it is not necessary to check the result of each IO operation for being false, like in the underlying original PHP API.
 
 Reading a file line by line (lazily)
 ```php
@@ -315,6 +337,8 @@ FileWriter::fromFile('output.txt')
 
 # CSV exports
 
+Also for CSV exports a nice fluent API is provided
+
 ```php
 // Please be aware that the following recordsets vary
 // structurally
@@ -342,7 +366,7 @@ $format =
 CSVExporter::create()
     ->format($format)
     ->mapper(function ($rec) {
-        // Add some twins in Vienna - just because we can  ;-)
+        // Add some clones in Vienna - just because we can  ;-)
         $rec2 = $rec;
         $rec2['LAST_NAME'] = 'Doppelganger';
         $rec2['CITY'] = 'Vienna';
@@ -353,8 +377,8 @@ CSVExporter::create()
     ->sourceCharset('UTF-8')
     ->targetCharset('ISO-8859-1')
     ->export(
-        FileWriter::fromFile('php://stdout'),
-        Seq::from($recs));
+	    Seq::from($recs),
+        FileWriter::fromFile('php://stdout'));
             
 // Will print out the following CSV formatted records to stdout:
 
@@ -366,3 +390,4 @@ CSVExporter::create()
 // "Michael ""Air""";Jordan;"New York";USA
 // "Michael ""Air""";Doppelganger;Vienna;Austria
 ```
+

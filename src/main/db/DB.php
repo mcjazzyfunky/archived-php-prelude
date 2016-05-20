@@ -5,7 +5,7 @@ namespace prelude\db;
 use InvalidArgumentException;
 use PDO;
 use prelude\util\Seq;
-use prelude\util\ValueObject;
+use prelude\util\DynObject;
 
 
 interface DB {

@@ -18,7 +18,7 @@ final class FileReader {
         return $openFile();
     }
 
-    function readFull() {
+    function readreadFully() {
         $ret = '';
         $stream = $this->open();
 

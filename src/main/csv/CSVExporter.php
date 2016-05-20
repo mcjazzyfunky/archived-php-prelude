@@ -63,7 +63,7 @@ final class CSVExporter {
         return $ret;
     }
 
-    function export(FileWriter $writer, Seq $recs) {
+    function export(Seq $recs, FileWriter $writer) {
         $params = $this->format->getParams();
         $columns = $params['columns'];
         $delimiter = $params['delimiter'];

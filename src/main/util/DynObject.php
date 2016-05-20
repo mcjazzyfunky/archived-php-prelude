@@ -5,8 +5,9 @@ namespace prelude\util;
 use ArrayAccess;
 use Countable;
 use InvalidArgumentException;
+use RuntimeException;
 
-final class ValueObject implements ArrayAccess, Countable {
+final class DynObject implements ArrayAccess, Countable {
     protected $propMap = array();
 
     private function __construct($props = null) {
@@ -19,13 +20,13 @@ final class ValueObject implements ArrayAccess, Countable {
 
     public function __get($propName) {
         if (!is_string($propName)) {
-            throw new InvalidArgumentException(
-                '[ValueObject#__get] First argument $propName must be a string');
+            throw new RuntimeException(
+                '[DynObject#__get] First argument $propName must be a string');
         }
         
         if (!array_key_exists($propName, $this->propMap)) {
             throw new InvalidArgumentException(
-                "[ValueObject#__get] Tried to read unknown property '$propName'");
+                "[DynObject#__get] Tried to read unknown property '$propName'");
         }
 
         return $this->propMap[$propName];
@@ -34,7 +35,7 @@ final class ValueObject implements ArrayAccess, Countable {
     public function __set($propName, $value) {
         if (!is_string($propName)) {
             throw new InvalidArgumentException(
-                '[ValueObject#__set] First argument $propName must be a string');
+                '[DynObject#__set] First argument $propName must be a string');
         }
         
         $this->propMap[$propName] = $value;

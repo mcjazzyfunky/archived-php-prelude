@@ -48,8 +48,8 @@ class CSVExporterTest extends PHPUnit_Framework_TestCase {
                 ->sourceCharset('UTF-8')
                 ->targetCharset('ISO-8859-1')
                 ->export(
-                    FileWriter::fromFile('php://stdout'),
-                    Seq::from($recs));
+                    Seq::from($recs),
+                    FileWriter::fromFile('php://stdout'));
     }
 }
 

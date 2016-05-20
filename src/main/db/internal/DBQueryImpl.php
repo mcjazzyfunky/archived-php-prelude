@@ -7,7 +7,7 @@ use prelude\db\DB;
 use prelude\db\DBQuery;
 use prelude\db\internal\DBAdapter;
 use prelude\util\Seq;
-use prelude\util\ValueObject;
+use prelude\util\DynObject;
 
 class DBQueryImpl implements DBQuery {
     private $db;
@@ -70,7 +70,7 @@ class DBQueryImpl implements DBQuery {
     function fetchVO() {
         $rec = $this->fetchRec();
     
-        return $rec === null ? $rec : ValueObject::from($rec);
+        return $rec === null ? $rec : DynObject::from($rec);
     }
     
     function fetchSingles() {
@@ -117,7 +117,7 @@ class DBQueryImpl implements DBQuery {
     
     function fetchSeqOfVOs() {
         return $this->fetchSeqOfRecs()->map(function ($rec) {
-            return ValueObject::from($rec);
+            return DynObject::from($rec);
         });
     }
 }

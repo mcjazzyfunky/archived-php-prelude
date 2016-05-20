@@ -7,17 +7,17 @@ require_once __DIR__ . '/../../../include.php';
 use prelude\util\Seq;
 
 class FileWriterTest extends \PHPUnit_Framework_TestCase {
-    function testMethodWriteFull() {
+    function testMethodWritereadFully() {
         $filename = tempnam(sys_get_temp_dir(), 'txt');
         
         FileWriter::fromFile($filename)
-            ->writeFull('This is a test');
+            ->writereadFully('This is a test');
             
         $this->assertEquals(file_get_contents($filename), 'This is a test');
 
         FileWriter::fromFile($filename)
             ->append()
-            ->writeFull('|This is a test');
+            ->writereadFully('|This is a test');
 
         $this->assertEquals(
             file_get_contents($filename),
