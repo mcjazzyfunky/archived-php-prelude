@@ -2,9 +2,7 @@
 
 namespace prelude\db;
 
-interface DBMultiQuery {
-    function bindMany($bindings);
-    
+interface DBMultiExecutor {
     function forceTransaction($forceTransaction);
 
     function process();

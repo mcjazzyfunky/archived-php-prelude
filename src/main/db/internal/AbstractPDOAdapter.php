@@ -21,7 +21,7 @@ abstract class AbstractPDOAdapter implements DBAdapter {
     
     abstract protected function limitQuery($query, $limit = null, $offset = 0);
 
-    function process($query, Seq $bindings = null, $forceTransaction = false) {
+    function process($query, Seq $bindings, $forceTransaction) {
         $ret = 0;
         $qry = trim($query);
         $conn = $this->getConnection();

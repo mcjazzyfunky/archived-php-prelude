@@ -82,7 +82,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
             $this->log->info('Table has been created');
                 
             $userCount = $shopDB
-                ->multiQuery('
+                ->query('
                     insert  into user values
                     (:id, :firstName, :lastName, :city, :country, :type)
                 ')
@@ -102,8 +102,8 @@ class DBTest extends PHPUnit_Framework_TestCase {
                     where
                         country=:country and type=:type
                 ')
-                ->bind(['country' => 'USA', 'type' => 2])
                 ->limit(100)
+                ->bind(['country' => 'USA', 'type' => 2])
                 ->fetchSeqOfVOs();    
 
         print "\nKnown users by ID:\n\n";

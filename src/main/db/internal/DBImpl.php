@@ -33,14 +33,10 @@ class DBImpl implements DB {
         return $this->params;
     }
 
-    function query($query, $bindings = null, $limit = null, $offset = 0) {
-        return new DBQueryImpl($this->adapter, $query, $bindings, $limit, $offset);
+    function query($query) {
+        return new DBQueryImpl($this->adapter, $query);
     }
 
-    function multiQuery($query, $bindings = null, $forceTransaction = false) {
-        return new DBMultiQueryImpl($this->adapter, $query, $bindings, $forceTransaction);
-    }
-    
     function runTransaction(callable $transaction) {
         $this->adapter->runTransaction($transaction);
     }

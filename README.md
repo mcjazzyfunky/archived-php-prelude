@@ -230,7 +230,7 @@ $users = [
 	[2, 'Jane', 'Whoever', 'Portland', 'USA']];
 
 $database
-    ->multiQuery('insert into user values (?, ?, ?, ?, ?)')
+    ->query('insert into user values (?, ?, ?, ?, ?)')
     ->bindMany($users) // also lazy sequences would be allowed here
     ->process();
 // will insert two new user records to table 'user'

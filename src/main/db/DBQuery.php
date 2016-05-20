@@ -2,36 +2,12 @@
 
 namespace prelude\db;
 
-interface DBQuery {
+interface DBQuery extends DBExecutor {
     function bind($params);
+    
+    function bindMany($bindings);
 
     function limit($n);
 
     function offset($n);
-
-    function execute();
-
-    function fetchSingle();
-
-    function fetchRow();
-
-    function fetchRec();
-
-    function fetchVO();
-
-    function fetchSingles();
-
-    function fetchRows();
-
-    function fetchRecs();
-
-    function fetchMap();
-
-    function fetchSeqOfSingles();
-
-    function fetchSeqOfRows();
-
-    function fetchSeqOfRecs();
-
-    function fetchSeqOfVOs();
 }

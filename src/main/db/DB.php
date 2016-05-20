@@ -11,9 +11,7 @@ use prelude\util\DynObject;
 interface DB {
     function getParams();
     
-    function query($query, $bindings = null, $limit = null, $offset = 0);
-    
-    function multiQuery($query, $bindings = null, $forceTransaction = false);
+    function query($query);
     
     function runIsolated(callable $action);
 
