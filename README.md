@@ -332,7 +332,7 @@ $database->runTransaction(function ($database) use ($users) {
          ->execute();
          
      $database
-         ->multiQuery('
+         ->query('
              insert  into user values
              (:id, :firstName, :lastName, :city, :country, :type)
          ')
