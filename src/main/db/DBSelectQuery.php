@@ -2,7 +2,7 @@
 
 namespace prelude\db;
 
-interface DBQueryBuilder extends DBExecutor {
+interface DBSelectQuery extends DBExecutor {
     function select($selectClause);
 
     function where($whereClause, $bindings = null);

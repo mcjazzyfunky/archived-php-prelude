@@ -3,9 +3,9 @@
 namespace prelude\db\internal;
 
 use prelude\db\DBException;
-use prelude\db\DBQueryBuilder;
+use prelude\db\DBSelectQuery;
 
-final class DBQueryBuilderImpl extends DBExecutorImpl implements DBQueryBuilder {
+final class DBSelectQueryImpl extends DBExecutorImpl implements DBSelectQuery {
     private $from;
     private $select;
     private $selectBindings;

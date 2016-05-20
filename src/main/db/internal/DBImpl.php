@@ -7,7 +7,7 @@ use PDO;
 use prelude\db\DB;
 use prelude\db\DBException;
 use prelude\db\DBQuery;
-use prelude\db\internal\DBQueryBuillderImpl;
+use prelude\db\internal\DBSelectQueryImpl;
 use prelude\db\internal\adapters\PDOSQLiteAdapter;
 use prelude\db\internal\adapters\PDOMySQLAdapter;
 
@@ -39,7 +39,7 @@ class DBImpl implements DB {
     }
     
     function from($fromClause) {
-        return new DBQueryBuilderImpl($this->adapter, $fromClause);
+        return new DBSelectQueryImpl($this->adapter, $fromClause);
     }
     
     function insertInto($tableName) {
