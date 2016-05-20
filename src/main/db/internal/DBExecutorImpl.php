@@ -11,8 +11,8 @@ use prelude\util\DynObject;
 
 class DBExecutorImpl implements DBExecutor {
     protected $db;
-    protected $bindings;
     protected $query;
+    protected $bindings;
     protected $limit;
     protected $offset;
 

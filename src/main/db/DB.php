@@ -13,6 +13,8 @@ interface DB {
     
     function query($query);
     
+    function from($fromClause);
+    
     function runIsolated(callable $action);
 
     function runTransaction(callable $transaction);

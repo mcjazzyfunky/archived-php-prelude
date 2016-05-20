@@ -119,5 +119,16 @@ class DBTest extends PHPUnit_Framework_TestCase {
                 $user->country
             );
         }
+        
+        $recs = 
+            $shopDB
+                ->from('user')
+                ->select('firstName, lastName')
+                ->where('country = ?', 'UK')
+                ->orderBy('lastName')
+                ->limit(100)
+                ->fetchRecs();
+                
+       // print_r($recs);
     }
 }

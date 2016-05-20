@@ -7,6 +7,7 @@ use PDO;
 use prelude\db\DB;
 use prelude\db\DBException;
 use prelude\db\DBQuery;
+use prelude\db\internal\DBQueryBuillderImpl;
 use prelude\db\internal\adapters\PDOSQLiteAdapter;
 use prelude\db\internal\adapters\PDOMySQLAdapter;
 
@@ -35,6 +36,10 @@ class DBImpl implements DB {
 
     function query($query) {
         return new DBQueryImpl($this->adapter, $query);
+    }
+    
+    function from($fromClause) {
+        return new DBQueryBuilderImpl($this->adapter, $fromClause);
     }
 
     function runTransaction(callable $transaction) {
