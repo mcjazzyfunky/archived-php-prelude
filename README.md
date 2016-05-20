@@ -5,7 +5,7 @@ A PHP library that makes daily programming much easier by providing concise faca
 
 # Contents
 * [Introduction](#introduction)
-  * [Motivation](#lazy-sequence)
+  * [Motivation](#motivation)
   * [Installation](#installation)
 
 * [API](#api)
@@ -38,7 +38,7 @@ This concept in well-known in other languages:
 - "Stream" in Java 8, Scala, Scheme
 - "Seq" in Clojure/ClojureScript
 - "Lazy list" in Haskell
-- IEnumerable in C#
+- "IEnumerable" in C#
 - etc.
 
 In "php-prelude" a lazy sequence is called "Seq" and implements the PHP standard interface IteratorAggregate.<br>
@@ -47,7 +47,15 @@ It is (in contrast to for example streams in Java 8) completely immutable and st
 Database result sets, the lines in a text files, file entries in a directory, CSV records, everything can be handled as lazy sequences, which makes things much easier.<br>
 And that is exactly what "php-prelude" does.
 
-Sound good? Then let's see the API....
+Sound good? Then check the [API](#api) for details....
+
+## Installation
+
+Just add the "php-prelude" folder somewhere to your project
+("composer" support is currently not available).<br>
+Then include the PHP file "include.php" which is to be found in the root
+folder of  "php-prelude" (all class and interface files will be included
+automatically as "php-prelude" uses PHP's autoload functionality).
 
 # API
 
