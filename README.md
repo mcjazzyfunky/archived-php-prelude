@@ -1,17 +1,57 @@
 
 # php-prelude
 
-A PHP library to make the daily programming much easier by providing a facade API for some important aspects of application development:
+A PHP library that makes daily programming much easier by providing concise facade APIs for some important aspects of application development
 
 # Table of Contents
-1. [Lazy sequencing](#lazy-sequences)
-2. [Dynamic objects](#dynamic-objects)
-3. [Database access](#database-access)
-1. [Scanning directories](#scanning-directories)
-2. [File input and output](#file-input-and-output)
-3. [CSV exports](#csv-exports)
+* [Introduction](#introduction)
+  * [Motivation](#lazy-sequence)
+  * [Installation](#installation)
 
-# Lazy sequences
+* [API](#api)
+  * [Lazy sequences](#lazy-sequences)
+  * [Dynamic objects](#dynamic-objects)
+  * [Database access](#database-access)
+  * [Scanning directories](#scanning-directories)
+  * [File input and output](#file-input-and-output)
+  * [CSV exports](#csv-exports)
+  
+* [Miscellaneous](#miscellaneous)
+  * [Project status](#project-status)
+
+# Introduction
+
+## Motivation
+
+PHP provides out-of-the-box a lot of great APIs for a very large amount of concerns, which makes application devolopment much faster.<br>
+Nevertheless the usage of this APIs does often not result in very concise code.<br>
+The reason is that the APIs are often quite low level and therefore the user have to deal with quite a lot of secondary aspects that could theoretically have also been handled by the library itself.
+For example, for a lot of I/O operation (file access, network, database etc.) you have to open the resource and close again it at the end and have to examine a lot of return values from I/O method calls whether they represent an error.<br>
+For database queries you have to open the database, create a prepared statement, bind values to that statement, execute the queries, fetch the result by looping over the statement and release the database connection afterwards.<br>
+With "php-prelude" in contrast, you normally do not have to deal with opening and closing resources.<br>
+You do not have to care about database connections and prepared statements etc.<br>
+The library will handle that for you and you can concentrate on the really important aspects of your application.
+
+A large part of "php-prelude" is based on the concept of lazy sequences.<br>
+This concept in well-known in other languages:
+
+- "Stream" in Java 8, Scala, Scheme
+- "Seq" in Clojure/ClojureScript
+- "Lazy list" in Haskell
+- IEnumerable in C#
+- etc.
+
+In "php-prelude" a lazy sequence is called "Seq" and implements the PHP standard interface IteratorAggregate.<br>
+It is (in contrast to for example streams in Java 8) completely immutable and stateless, that means that you can traverse the sequence as often you like and pass the Seq around any way you like.<br>
+
+Database result sets, the lines in a text files, file entries in a directory, CSV records, everything can be handled as lazy sequences, which makes things much easier.<br>
+And that is exactly what "php-prelude" does.
+
+Sound good? Then let's see the API....
+
+# API
+
+## Lazy sequences
 
 Creating a sequence from an array
 ```php
@@ -125,11 +165,12 @@ $seq->each(function ($n) {
 
 And many other sequence operations (see API documentation for details) .....
 
-# Dynamic objects
+## Dynamic objects
 
 Instead of handling records in associative arrays, it's possible to use dynamic objects where each property can be accessed using "->" arrow.
 The advantage is that this is syntactically much nicer and a it will throw a RuntimeException in case that someone will try to read a property that does not exist.
-The disadvantage is that dynamic objects use PHP's magic functions internally which is much slower than accessing values in an associative array.
+The disadvantage is that dynamic objects use PHP's magic functions internally which is slower than accessing values in an associative array.
+Dynamic objects are actually quite handy to be used in database query results.
 
 ```php
 $user = new DynObject([
@@ -144,7 +185,7 @@ print "$user->firstName $user->lastName, $user->city $user->country";
 // Prints out: John Doe, Seattle USA
 ```
 
-# Database access
+## Database access
 
 Executing query:
 
@@ -165,6 +206,7 @@ $database
 	->execute();
 // Will delete the record of user 12345
 ```
+
 ```php
 $database
     ->query('delete from user where city=:city and country=:country')
@@ -186,7 +228,7 @@ $database
 // will insert two new user records to table 'user'
 ```
 
-Fetch a single value
+Fetching a single value
 ```php
 $database
 	->query('select count(*) from user where country=:0 and city=:1')
@@ -195,17 +237,25 @@ $database
 // Result: Number of matching records
 ```
 
-Fetch an array of numeric arrays
+Fetching an array of single values
+```php
+$database
+	->query('select id from user where country=:0 and city=:1')
+	->bind([$country, $city])
+	->fetchSingles()
+// Result: [111, 222, ...]
+```
+
+Fetching an array of numeric arrays
 ```php
 $database
     ->query('select id, firstName, lastName from user where country=?')
     ->bind($country)
     ->fetchRows()
-
 // Result: [[111, 'John', 'Doe'], [222, 'Jane', 'Whoever'], ...]
 ```
 
-Fetch an array of associative arrays
+Fetching an array of associative arrays
 ```php    
 $databse
     ->query('select id, firstName, lastName from user where country=?)',
@@ -216,7 +266,7 @@ $databse
 //  ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'], ...]
 ```
 
-Fetch a lazy sequence of numeric arrays
+Fetching a lazy sequence of numeric arrays
 ```php
 $database
     ->query('select * from user where country=:0 and city=:1')
@@ -227,7 +277,7 @@ $database
 //     [222, 'Jane', 'Whoever'], ...>
 ```
 
-Fetch a lazy sequence of associative arrays
+Fetching a lazy sequence of associative arrays
 ```php        
 $database
     ->query('select id, firstName, lastName from user where country=?')
@@ -254,9 +304,56 @@ foreach ($user as $user) {
 // Prints out the first 100 users from the selected country
 ```
 
-# Scanning directories
+Fetching a key-value map
 
-Scanning a directory for certain files or subdirectories (method 'scan' will return a lazy sequence)
+```php
+$database
+    ->query('select id, lastName from user')
+    ->fetchMap()
+// Result: [111 => 'Doe', '222' => 'Whoever', ...]
+```
+
+Transactions
+
+```php
+$users = ...;
+
+$database->runTransaction(function ($database) use ($users) {
+     $database
+         ->query('delete from user')
+         ->execute();
+         
+     $database
+         ->multiQuery('
+             insert  into user values
+             (:id, :firstName, :lastName, :city, :country, :type)
+         ')
+         ->bindMany($users)
+         ->process();
+});
+// A rollback will be performed in case that
+// the closure throws an exception or returns false.
+// Otherwise a commit will be performed once the closure
+// has been run completely.
+```
+
+Using dedicated database connections:
+Normally "php-prelude" will keep database connections open until the end of the script or until connection timeouts.
+An once opened database connection will be reused for each following database query.
+If a dedicated database connection shall be used far a particular part of the program, having the database connection been opened at its start and closed at its end, then the method 'runIsolated' has to be used.
+
+```php
+$database->runIsolated(function ($database) {
+     $database
+         ->query('delete from user')
+         ->execute();
+});
+
+```
+
+## Scanning directories
+
+Scanning a directory for certain files or subdirectories
 
 ```php
 PathScanner::create()
@@ -267,7 +364,7 @@ PathScanner::create()
 	->forceAbsolute() // list absolute paths
 	->sort(FileComparators::byFileSize())
 	->listPaths() // list paths as strings otherwise File objects would be returned
-	->scan('.') // scan current directory
+	->scan('.') // scan current directory, will return a lazy sequence
 	->toArray();
 // Result: An array of all PHP and JSON file paths as strings in the
 // current directory (including files in the subdirectories),
@@ -275,7 +372,7 @@ PathScanner::create()
 // sorted by file size (ascending)
 ```
 
-# File input and output
+## File input and output
 
 FIle operation without the need to handle file pointers aka. stream explicitly:
 No need to open or close resources.
@@ -335,7 +432,7 @@ FileWriter::fromFile('output.txt')
     ->writeFully('This text will be appended to the existing file');
 ```
 
-# CSV exports
+## CSV exports
 
 Also for CSV exports a nice fluent API is provided
 
@@ -391,3 +488,11 @@ CSVExporter::create()
 // "Michael ""Air""";Doppelganger;Vienna;Austria
 ```
 
+# 3. Miscellaneous
+
+## Project status
+
+"php-prelude" is quite a new project which is still in alpha state.<br>
+While the API is almost final and the implementation is already working,
+there's still a lot to do regarding finalizing code, unit testing and inline
+documentation.
