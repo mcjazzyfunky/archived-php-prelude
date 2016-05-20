@@ -41,6 +41,18 @@ class DBImpl implements DB {
     function from($fromClause) {
         return new DBQueryBuilderImpl($this->adapter, $fromClause);
     }
+    
+    function insertInto($tableName) {
+        return new DBInsertQueryImpl($this, $tableName);
+    }
+    
+    function update($tableName) {
+        return new DBUpdateQueryImpl($this, $tableName);
+    }
+    
+    function deleteFrom($tableName) {
+        return new DBDeleteQueryImpl($this, $tableName);
+    }
 
     function runTransaction(callable $transaction) {
         $this->adapter->runTransaction($transaction);

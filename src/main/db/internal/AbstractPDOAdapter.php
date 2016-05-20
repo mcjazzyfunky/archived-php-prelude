@@ -131,11 +131,6 @@ abstract class AbstractPDOAdapter implements DBAdapter {
         if ($ret === null || $forceNew) {
             $options = @$this->dbParams['options'];
            
-            // TODO: Quite sure this is a stupid idea... 
-            if (empty($options[PDO::ATTR_TIMEOUT])) {
-                $options[PDO::ATTR_TIMEOUT] = 30;
-            }
-            
             $options[PDO::ATTR_EMULATE_PREPARES] = false;
             $options[PDO::ATTR_STRINGIFY_FETCHES] = false;
             $options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;

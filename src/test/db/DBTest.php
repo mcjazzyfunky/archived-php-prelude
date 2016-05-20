@@ -80,7 +80,8 @@ class DBTest extends PHPUnit_Framework_TestCase {
                 ->execute();
                 
             $this->log->info('Table has been created');
-                
+               
+            /* 
             $userCount = $shopDB
                 ->query('
                     insert  into user values
@@ -88,7 +89,29 @@ class DBTest extends PHPUnit_Framework_TestCase {
                 ')
                 ->bindMany($newUsers)
                 ->process();
-                
+            */
+            
+            $userCount = count($newUsers);
+            
+            foreach ($newUsers as $user) {
+                $shopDB
+                    ->insertInto('user')
+                    ->values($user)
+                    ->execute();
+            }
+            
+            $shopDB
+                ->update('user')
+                ->set(['lastName' => 'newLastName'])
+                ->where('firstName=?', 'Jimmy')
+                ->execute();
+            
+            
+            $shopDB
+                ->deleteFrom('user')
+                ->where('lastName=?', 'newLastName')
+                ->execute();
+            
             $this->log->info('%d users have been inserted', $userCount);
         });
         

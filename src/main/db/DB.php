@@ -15,6 +15,12 @@ interface DB {
     
     function from($fromClause);
     
+    function insertInto($tableName);
+    
+    function update($tableName);
+    
+    function deleteFrom($tableName);
+    
     function runIsolated(callable $action);
 
     function runTransaction(callable $transaction);
