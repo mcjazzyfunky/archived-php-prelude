@@ -203,7 +203,7 @@ $database
 	->execute();
 // Will clear table 'user'
 ```
-Executing query with bindings
+Executing query with bindings:
 
 ```php
 $userId = 12345;
@@ -236,7 +236,7 @@ $database
 // will insert two new user records to table 'user'
 ```
 
-Fetching a single value
+Fetching a single value:
 ```php
 $database
 	->query('select count(*) from user where country=:0 and city=:1')
@@ -245,7 +245,7 @@ $database
 // Result: Number of matching records
 ```
 
-Fetching an array of single values
+Fetching an array of single values:
 ```php
 $database
 	->query('select id from user where country=:0 and city=:1')
@@ -254,7 +254,7 @@ $database
 // Result: [111, 222, ...]
 ```
 
-Fetching an array of numeric arrays
+Fetching an array of numeric arrays:
 ```php
 $database
     ->query('select id, firstName, lastName from user where country=?')
@@ -263,7 +263,7 @@ $database
 // Result: [[111, 'John', 'Doe'], [222, 'Jane', 'Whoever'], ...]
 ```
 
-Fetching an array of associative arrays
+Fetching an array of associative arrays:
 ```php    
 $databse
     ->query('select id, firstName, lastName from user where country=?)',
@@ -274,7 +274,7 @@ $databse
 //  ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'], ...]
 ```
 
-Fetching a lazy sequence of numeric arrays
+Fetching a lazy sequence of numeric arrays:
 ```php
 $database
     ->query('select * from user where country=:0 and city=:1')
@@ -285,7 +285,7 @@ $database
 //     [222, 'Jane', 'Whoever'], ...>
 ```
 
-Fetching a lazy sequence of associative arrays
+Fetching a lazy sequence of associative arrays:
 ```php        
 $database
     ->query('select id, firstName, lastName from user where country=?')
@@ -296,7 +296,7 @@ $database
 //     ['id' => 222, 'firstName' => 'Jane', 'lastName' => 'Whoever'], ...>
 ```
 
-Fetching a lazy sequence of dynamic objects
+Fetching a lazy sequence of dynamic objects:
 
 ```php
 $users = 
@@ -312,7 +312,7 @@ foreach ($user as $user) {
 // Prints out the first 100 users from the selected country
 ```
 
-Fetching a key-value map
+Fetching a key-value map:
 
 ```php
 $database
@@ -321,7 +321,57 @@ $database
 // Result: [111 => 'Doe', '222' => 'Whoever', ...]
 ```
 
-Transactions
+For simple SELECT, INSERT, UPDATE and DELETE queries there are also alternative fluent interfaces, depending on the concrete case they may provide a shorter solution compared to the more powerful general query method mentioned above. 
+
+Alternative DSL for simple SELECT queries:
+
+```php
+$users =
+    $database
+        ->from('user')
+        ->select('firstName, lastName, city, country')
+        ->where('city=? and country=?', ['Seattle', 'USA'])
+        ->orderBy('lastName, firstName')
+        ->limit(100)
+        ->fetchRecs();
+```
+
+Alternative DSL for simple INSERT queries:
+
+```php
+$newUser = {
+    'firstName' => 'James',
+    'lastName' => 'Jools',
+    'city' => 'Sidney',
+    'country' => 'Australia'
+}
+
+$database
+    ->insertInto('user')
+    ->values($user)
+    ->execute();
+```
+
+Alternative DSL for simple UPDATE queries:
+
+```php
+$database
+    ->update('user')
+    ->set(['city' => 'Sacramento'])
+    ->where('id=?', 12345)
+    ->execute();
+```
+
+Alternative DSL for simple DELETE queries:
+
+```php
+$database
+    ->deleteFrom('user')
+    ->where('id=?', 12345)
+    ->execute();
+```
+
+Transactions:
 
 ```php
 $users = ...;
