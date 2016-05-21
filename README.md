@@ -6,7 +6,7 @@ Features:
 
 - A very nice way to handle lazy sequences
 - Most APIs are provided as fluent interfaces
-- Exceptions will be thrown on errors, no need to check return values
+- Errors will result in exceptions, no need to check return values
   whether they are false
 - IO operations can be run without taking care about opening
   and closing resources
@@ -40,7 +40,7 @@ PHP provides out-of-the-box a lot of great APIs for a very large amount of conce
 Nevertheless the usage of this APIs does often not result in very concise code.<br>
 The reason is that the APIs are often quite low level and therefore the programmer have to deal with quite a lot of secondary aspects that could theoretically have also been handled by the library itself.
 For example, for a lot of I/O operations (file access, network, database etc.) you have to open the resource and close again it at the end and have to examine a lot of return values from I/O method calls whether they represent an error.<br>
-For database queries you have to open the database, create a prepared statement, bind values to that statement, execute the queries, fetch the result by looping over the statement and release the database connection afterwards.<br>
+For database queries you have to open the database, create a prepared statement, bind values to that statement, execute the query, fetch the result by looping over the statement and release the database connection afterwards.<br>
 With "php-prelude" in contrast, you normally do not have to deal with opening and closing resources.<br>
 You do not have to care about database connections and prepared statements etc.<br>
 The library will handle that for you and you can concentrate on the really important aspects of your application.
@@ -55,7 +55,7 @@ This concept in well-known in other languages:
 - etc.
 
 In "php-prelude" a lazy sequence is called "Seq" and implements the PHP standard interface IteratorAggregate.<br>
-It is (in contrast to for example streams in Java 8) completely immutable and stateless, that means that you can traverse the sequence as often you like and pass the Seq around any way you like.<br>
+It is (in contrast to for example streams in Java 8) completely immutable and stateless, that means that you can traverse the sequence as often you want and pass the Seq around any way you like.<br>
 
 Database result sets, the lines in a text files, file entries in a directory, CSV records, everything can be handled as lazy sequences, which makes things much easier.<br>
 And that is exactly what "php-prelude" does.
@@ -362,11 +362,11 @@ $newUser = {
     'lastName' => 'Jools',
     'city' => 'Sidney',
     'country' => 'Australia'
-}
+};
 
 $database
     ->insertInto('user')
-    ->values($user)
+    ->values($newUser)
     ->execute();
 ```
 
@@ -414,9 +414,9 @@ $database->runTransaction(function ($database) use ($users) {
 ```
 
 Using dedicated database connections:
-Normally "php-prelude" will keep database connections open until the end of the script or until connection timeouts.
+Normally "php-prelude" will keep database connections open until the end of the script or until connection times out.
 An once opened database connection will be reused for each following database query.
-If a dedicated database connection shall be used far a particular part of the program, having the database connection been opened at its start and closed at its end, then the method 'runIsolated' has to be used.
+If a dedicated database connection shall be used for a particular part of the program, having the database connection been opened at its start and closed at its end, then the method 'runIsolated' has to be used.
 
 ```php
 $database->runIsolated(function ($database) {
@@ -442,7 +442,8 @@ PathScanner::create()
 	->listPaths() // list paths as strings otherwise File objects would be returned
 	->scan('.') // scan current directory, will return a lazy sequence
 	->toArray();
-// Result: An array of all PHP and JSON file paths as strings in the
+// Result:
+// An array of all PHP and JSON file paths as strings in the
 // current directory (including files in the subdirectories),
 // excluding temporary files and symbolic links,
 // sorted by file size (ascending)
@@ -450,9 +451,9 @@ PathScanner::create()
 
 ## File input and output
 
-FIle operation without the need to handle file pointers aka. stream explicitly:
+File operations without the need of handling file pointers explicitly:
 No need to open or close resources.
-Each IO operation will throw an IOException on error, that means that it is not necessary to check the result of each IO operation for being false, like in the underlying original PHP API.
+Each IO operation will throw an IOException on error, that means that it is not necessary to check the result of each IO operation for being false, like with the underlying original PHP API.
 
 Reading a file line by line (lazily)
 ```php
@@ -506,6 +507,34 @@ Appendng a concrete text to the file
 FileWriter::fromFile('output.txt')
     ->append()
     ->writeFully('This text will be appended to the existing file');
+```
+
+Counting lines of code in a whole project:
+
+```php
+// Determine the number of-non blank PHP lines in the "src" folder:
+// "scan" returns a lazy sequence of files, "flatMap" takes
+// that file sequence, maps each file entry to a sequence of text
+// lines and flattens the seqence of text line sequences afterwards
+// into a single senquence of text lines.
+// All of that happens completely lazily.
+$lineCount =
+PathScanner::create()
+    ->recursive()
+    ->includeFiles('*.php')
+    ->forceAbsolute()
+    ->scan('./src')
+    ->flatMap(function ($file) {
+        return
+            FileReader::fromFile($file)
+                ->readSeq();
+})
+->filter(function ($line) {
+    return trim($line) !== '';
+})
+->count();
+
+print "Number of non-blank PHP lines in directory 'src': $lineCount\n";
 ```
 
 ## CSV exports
