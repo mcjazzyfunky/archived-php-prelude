@@ -89,8 +89,8 @@ Seq::range(1, 5);
 Sequences are lazy: The enumeration will only be performed as far as really needed
 ```php
 Seq::range(1, 1000000000)
-	->take(10)
-	->max()
+    ->take(10)
+    ->max()
 // Result: 10 (only 10 values have been enumerated)
 ```
 Building an array of first 10 fibonacci numbers
@@ -105,9 +105,9 @@ Seq::iterate([1, 1], function ($a, $b) {
 Creating a lazy sequence based on a generator function
 ```php
 Seq::from(function () {
-	for ($i = 0; $i < 1000000000; +$i) {
-		yield $i;
-	}
+    for ($i = 0; $i < 1000000000; +$i) {
+        yield $i;
+    }
 });
 ```
 
@@ -127,7 +127,7 @@ Filtering sequences
 ```php
 Seq::from([1, 2, 7, 9, 12, 24, 33, 45])
     ->filter(function ($n) {
-	    return $n % 3 === 0;
+        return $n % 3 === 0;
     })
 // Result: <9, 12, 33, 45>
 ```
@@ -136,7 +136,7 @@ Mapping sequences
 ```php
 Seq::from([1, 2, 3, 4, 5])
     ->map(function ($n) {
-	    return $n * $n;
+        return $n * $n;
     })
 // Result: <1, 4, 9, 16, 25>
 ```
@@ -174,13 +174,13 @@ Traversing sequences
 $seq = Seq::from([1, 2, 3, 4, 5]);
 
 foreach ($seq as $n) {
-	print $n;
+    print $n;
 }
 // Prints out 12345
 
 // Same as
 $seq->each(function ($n) {
-	print $n;
+    print $n;
 });
 ```
 
@@ -214,7 +214,7 @@ Executing query:
 ```php
 $database
     ->query('delete from user')
-	->execute();
+    ->execute();
 // Will clear table 'user'
 ```
 Executing query with bindings:
@@ -242,7 +242,7 @@ Inserting many records  with the same query
 ```php
 $users = [
     [1, 'John', 'Doe', 'Boston', 'USA'],
-	[2, 'Jane', 'Whoever', 'Portland', 'USA']];
+    [2, 'Jane', 'Whoever', 'Portland', 'USA']];
 
 $database
     ->query('insert into user values (?, ?, ?, ?, ?)')
@@ -254,18 +254,18 @@ $database
 Fetching a single value:
 ```php
 $database
-	->query('select count(*) from user where country=:0 and city=:1')
-	->bind([$country, $city])
-	->fetchSingle()
+    ->query('select count(*) from user where country=:0 and city=:1')
+    ->bind([$country, $city])
+    ->fetchSingle()
 // Result: Number of matching records
 ```
 
 Fetching an array of single values:
 ```php
 $database
-	->query('select id from user where country=:0 and city=:1')
-	->bind([$country, $city])
-	->fetchSingles()
+    ->query('select id from user where country=:0 and city=:1')
+    ->bind([$country, $city])
+    ->fetchSingles()
 // Result: [111, 222, ...]
 ```
 
@@ -433,15 +433,15 @@ Scanning a directory for certain files or subdirectories
 
 ```php
 PathScanner::create()
-	->recursive()
-	->includeFiles(['*.php', '*.json'])
-	->excludeFiles(['*tmp*', '*temp*'])
-	->excludeLinks()
-	->forceAbsolute() // list absolute paths
-	->sort(FileComparators::byFileSize())
-	->listPaths() // list paths as strings otherwise File objects would be returned
-	->scan('.') // scan current directory, will return a lazy sequence
-	->toArray();
+    ->recursive()
+    ->includeFiles(['*.php', '*.json'])
+    ->excludeFiles(['*tmp*', '*temp*'])
+    ->excludeLinks()
+    ->forceAbsolute() // list absolute paths
+    ->sort(FileComparators::byFileSize())
+    ->listPaths() // list paths as strings otherwise File objects would be returned
+    ->scan('.') // scan current directory, will return a lazy sequence
+    ->toArray();
 // Result:
 // An array of all PHP and JSON file paths as strings in the
 // current directory (including files in the subdirectories),
@@ -519,20 +519,20 @@ Counting lines of code in a whole project:
 // into a single senquence of text lines.
 // All of that happens completely lazily.
 $lineCount =
-PathScanner::create()
-    ->recursive()
-    ->includeFiles('*.php')
-    ->forceAbsolute()
-    ->scan('./src')
-    ->flatMap(function ($file) {
-        return
-            FileReader::fromFile($file)
-                ->readSeq();
-})
-->filter(function ($line) {
-    return trim($line) !== '';
-})
-->count();
+	PathScanner::create()
+		->recursive()
+		->includeFiles('*.php')
+		->forceAbsolute()
+		->scan('./src')
+		->flatMap(function ($file) {
+			return
+				FileReader::fromFile($file)
+					->readSeq();
+	})
+	->filter(function ($line) {
+		return trim($line) !== '';
+	})
+	->count();
 
 print "Number of non-blank PHP lines in directory 'src': $lineCount\n";
 ```
@@ -579,7 +579,7 @@ CSVExporter::create()
     ->sourceCharset('UTF-8')
     ->targetCharset('ISO-8859-1')
     ->export(
-	    Seq::from($recs),
+        Seq::from($recs),
         FileWriter::fromFile('php://stdout'));
             
 // Will print out the following CSV formatted records to stdout:
