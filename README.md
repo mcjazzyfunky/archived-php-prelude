@@ -321,7 +321,10 @@ $database
 // Result: [111 => 'Doe', '222' => 'Whoever', ...]
 ```
 
-For simple SELECT, INSERT, UPDATE and DELETE queries there are also alternative fluent interfaces, depending on the concrete case they may provide a shorter solution compared to the more powerful general query method mentioned above. 
+For simple SELECT, INSERT, UPDATE and DELETE queries there is also an
+alternative DSL available.<br>
+Depending on the concrete case that may be shorter compared to the
+more powerful query method mentioned above. 
 
 Alternative DSL for simple SELECT queries:
 
@@ -374,7 +377,7 @@ $database
 Transactions:
 
 ```php
-$users = ...;
+$users = ...; // either an array or a lazy sequence of data from several users
 
 $database->runTransaction(function ($database) use ($users) {
      $database
