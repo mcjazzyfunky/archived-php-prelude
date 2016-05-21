@@ -3,6 +3,19 @@
 
 A PHP library that makes daily programming much easier by providing concise facade APIs for some important aspects of application development
 
+Features:
+
+- Very nice way to handle lazy sequences
+- Most APIs are provided as fluent interfaces
+- Exceptions will be thrown on errors, no need to check return values
+  for being false
+- IO operations can be run without taking care about opening
+  and closing resources
+- Database operations and queries are performed without handling things
+  like database connections or preparing statements explicitly
+- Database transaction commits and rollbacks will be executed automatically
+  depending on the success/result of an operation
+
 # Contents
 * [Introduction](#introduction)
   * [Motivation](#motivation)
@@ -223,7 +236,8 @@ $database
 // Will delete all users from Seattle
 ```
 
-Inserting many records  with the same query (internally, prepared statements will be used)
+Inserting many records  with the same query
+(internally, a single prepared statement will be used)
 ```php
 $users = [
     [1, 'John', 'Doe', 'Boston', 'USA'],
@@ -231,7 +245,7 @@ $users = [
 
 $database
     ->query('insert into user values (?, ?, ?, ?, ?)')
-    ->bindMany($users) // also lazy sequences would be allowed here
+    ->execute($users) // also lazy sequences would be allowed here
     ->process();
 // will insert two new user records to table 'user'
 ```
@@ -390,7 +404,7 @@ $database->runTransaction(function ($database) use ($users) {
              (:id, :firstName, :lastName, :city, :country, :type)
          ')
          ->bindMany($users)
-         ->process();
+         ->execute();
 });
 // A rollback will be performed in case that
 // the closure throws an exception or returns false.

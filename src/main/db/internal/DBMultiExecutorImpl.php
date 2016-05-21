@@ -35,7 +35,7 @@ class DBMultiExecutorImpl implements DBMultiExecutor {
         return $ret;
     }
 
-    function process() {
+    function execute() {
         return $this->adapter->process(
             $this->query,
             Seq::from($this->bindings),

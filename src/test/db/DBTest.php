@@ -88,7 +88,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
                     (:id, :firstName, :lastName, :city, :country, :type)
                 ')
                 ->bindMany($newUsers)
-                ->process();
+                ->execute();
             */
             
             $userCount = count($newUsers);
