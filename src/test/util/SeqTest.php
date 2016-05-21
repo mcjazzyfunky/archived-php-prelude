@@ -2,11 +2,11 @@
 
 namespace prelude\util;
 
-require_once __DIR__ . '/../../main/util/Seq.php';
-
 error_reporting(E_ALL);
 
-class SeqTest extends \PHPUnit_Framework_TestCase {
+use PHPUnit_Framework_TestCase;
+
+class SeqTest extends PHPUnit_Framework_TestCase {
     function testMethodFilter() {
         $arr = Seq::range(1, 10)
             ->filter(function ($n) {

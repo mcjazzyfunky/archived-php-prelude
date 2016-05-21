@@ -8,6 +8,7 @@ use PHPUnit_Framework_TestCase;
 
 class PathScannerTest extends PHPUnit_Framework_TestCase {
     function testMethodScan() {
+/*
         $arr =
             PathScanner::create()
                 ->recursive()
@@ -24,5 +25,28 @@ class PathScannerTest extends PHPUnit_Framework_TestCase {
                 ->toArray();
 
         print_r($arr);
+*/        
+        // Determine the number of-non blank PHP lines in the "src" folder:
+        // "scan" returns a lazy sequence of files, "flatMap" takes
+        // that file sequence, maps each file entry to a sequence of text
+        // lines and flattens the seqence of text line sequences afterwards
+        // into a single senquence of text lines.
+        // All of that happens completely lazily.
+        $lineCount =
+            PathScanner::create()
+                ->recursive()
+                ->includeFiles('*.php')
+                ->forceAbsolute()
+                ->scan('./src')
+                ->flatMap(function ($file) {
+                    return FileReader::fromFile($file)
+                        ->readSeq();
+                })
+                ->filter(function ($line) {
+                    return trim($line) !== '';
+                })
+                ->count();
+                
+        print "Number of non-blank PHP lines in directory 'src': $lineCount\n";
     }
 }

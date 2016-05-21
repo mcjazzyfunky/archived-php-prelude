@@ -1,20 +1,20 @@
-
 # php-prelude
 
-A PHP library that makes daily programming much easier by providing concise facade APIs for some important aspects of application development
+A PHP library that makes daily programming much easier by providing concise APIs for some important aspects in application development
 
 Features:
 
-- Very nice way to handle lazy sequences
+- A very nice way to handle lazy sequences
 - Most APIs are provided as fluent interfaces
 - Exceptions will be thrown on errors, no need to check return values
-  for being false
+  whether they are false
 - IO operations can be run without taking care about opening
   and closing resources
 - Database operations and queries are performed without handling things
   like database connections or preparing statements explicitly
 - Database transaction commits and rollbacks will be executed automatically
   depending on the success/result of an operation
+- Simple DSL for generating CSV exports
 
 # Contents
 * [Introduction](#introduction)
@@ -38,8 +38,8 @@ Features:
 
 PHP provides out-of-the-box a lot of great APIs for a very large amount of concerns, which makes application devolopment much faster.<br>
 Nevertheless the usage of this APIs does often not result in very concise code.<br>
-The reason is that the APIs are often quite low level and therefore the user have to deal with quite a lot of secondary aspects that could theoretically have also been handled by the library itself.
-For example, for a lot of I/O operation (file access, network, database etc.) you have to open the resource and close again it at the end and have to examine a lot of return values from I/O method calls whether they represent an error.<br>
+The reason is that the APIs are often quite low level and therefore the programmer have to deal with quite a lot of secondary aspects that could theoretically have also been handled by the library itself.
+For example, for a lot of I/O operations (file access, network, database etc.) you have to open the resource and close again it at the end and have to examine a lot of return values from I/O method calls whether they represent an error.<br>
 For database queries you have to open the database, create a prepared statement, bind values to that statement, execute the queries, fetch the result by looping over the statement and release the database connection afterwards.<br>
 With "php-prelude" in contrast, you normally do not have to deal with opening and closing resources.<br>
 You do not have to care about database connections and prepared statements etc.<br>
@@ -86,7 +86,7 @@ Seq::range(1, 5);
 // Result: <1, 2, 3, 4> (right value is excluded)
 ```
 
-Sequences are really lazy: The enumeration will only be performed as far as really needed
+Sequences are lazy: The enumeration will only be performed as far as really needed
 ```php
 Seq::range(1, 1000000000)
 	->take(10)
@@ -164,7 +164,7 @@ Seq::concatMany([$seq1, $seq2, $seq3])
 
 Flattening sequences
 ```php
-$seq = Seq::from([Seq::from([1, 2, 3]), $Seq::from([4, 5, 6])])
+$seq = Seq::from([Seq::from([1, 2, 3]), Seq::from([4, 5, 6])])
 $seq->flatten()
 // Result: <1, 2, 3, 4, 5, 6>
 ```
@@ -189,9 +189,10 @@ And many other sequence operations (see API documentation for details) .....
 ## Dynamic objects
 
 Instead of handling records in associative arrays, it's possible to use dynamic objects where each property can be accessed using "->" arrow.
-The advantage is that this is syntactically much nicer and a it will throw a RuntimeException in case that someone will try to read a property that does not exist.
+The advantage is that this is syntactically much nicer then with associative arrays and a it will throw a RuntimeException in case that someone will try to read a property that does not exist.
 The disadvantage is that dynamic objects use PHP's magic functions internally which is slower than accessing values in an associative array.
 Dynamic objects are actually quite handy to be used in database query results.
+As a rule of thumb, it's always fine to use dynamic objects in areas where you do not necessarily need the highest performance possible (e.g. in cronjobs), for high performance multi-client environment they may not be the best choice.
 
 ```php
 $user = new DynObject([
@@ -224,7 +225,7 @@ $userId = 12345;
 $database
     ->query('delete from user where id=?')
     ->bind($userId)
-	->execute();
+    ->execute();
 // Will delete the record of user 12345
 ```
 
@@ -232,7 +233,7 @@ $database
 $database
     ->query('delete from user where city=:city and country=:country')
     ->bind(['city' => 'Seattle', 'country' => 'USA'])
-	->execute();
+    ->execute();
 // Will delete all users from Seattle
 ```
 
@@ -245,8 +246,8 @@ $users = [
 
 $database
     ->query('insert into user values (?, ?, ?, ?, ?)')
-    ->execute($users) // also lazy sequences would be allowed here
-    ->process();
+    ->bindMany($users) // also lazy sequences would be allowed here
+    ->execute();
 // will insert two new user records to table 'user'
 ```
 
@@ -280,7 +281,7 @@ $database
 Fetching an array of associative arrays:
 ```php    
 $databse
-    ->query('select id, firstName, lastName from user where country=?)',
+    ->query('select id, firstName, lastName from user where country=?'),
     ->bind($country)
     ->fetchRecs()
 // Result:
@@ -321,7 +322,7 @@ $users =
         ->fetchSeqOfDynObjects();
     
 foreach ($user as $user) {
-    print $user->id . ': ' . $user->firstName . ' ' . $user->lastName . "\n";
+    print "$user->id: $user->firstName $user->lastName\n";
 }
 // Prints out the first 100 users from the selected country
 ```
