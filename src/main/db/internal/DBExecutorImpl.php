@@ -49,10 +49,10 @@ class DBExecutorImpl implements DBExecutor {
         return count($arr) === 0 ? null : $arr[0];
     }
     
-    function fetchVO() {
+    function fetchDynObject(array $options = null) {
         $rec = $this->fetchRec();
     
-        return $rec === null ? $rec : DynObject::from($rec);
+        return $rec === null ? $rec : DynObject::from($rec, $options);
     }
     
     function fetchSingles() {
@@ -65,6 +65,10 @@ class DBExecutorImpl implements DBExecutor {
     
     function fetchRecs() {
         return $this->fetchSeqOfRecs()->toArray();
+    }
+    
+    function fetchDynObjects() {
+        return $this->fetchSeqOfDynObjects()->toArray();
     }
     
     function fetchMap() {
@@ -97,9 +101,9 @@ class DBExecutorImpl implements DBExecutor {
             $this->offset);
     }
     
-    function fetchSeqOfVOs() {
-        return $this->fetchSeqOfRecs()->map(function ($rec) {
-            return DynObject::from($rec);
+    function fetchSeqOfDynObjects(array $options = null) {
+        return $this->fetchSeqOfRecs()->map(function ($rec) use ($options) {
+            return DynObject::from($rec, $options);
         });
     }
 }

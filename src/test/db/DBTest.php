@@ -127,7 +127,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
                 ')
                 ->limit(100)
                 ->bind(['country' => 'USA', 'type' => 2])
-                ->fetchSeqOfVOs();    
+                ->fetchSeqOfDynObjects();    
 
         print "\nKnown users by ID:\n\n";
             

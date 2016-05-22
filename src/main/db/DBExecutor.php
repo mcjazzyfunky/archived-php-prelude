@@ -11,7 +11,7 @@ interface DBExecutor {
 
     function fetchRec();
 
-    function fetchVO();
+    function fetchDynObject();
 
     function fetchSingles();
 
@@ -27,5 +27,5 @@ interface DBExecutor {
 
     function fetchSeqOfRecs();
 
-    function fetchSeqOfVOs();
+    function fetchSeqOfDynObjects(array $options = null);
 }
