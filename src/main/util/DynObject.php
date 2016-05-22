@@ -12,9 +12,11 @@ final class DynObject implements ArrayAccess, Countable {
     protected $readOnly;
     protected $extensible;
     
-    const MODE_DEFAULT =  0;
-    const MODE_READ_ONLY = 1;
-    const MODE_EXTENSIBLE = 2;
+    const OPTION_MODE = 'mode';
+    
+    const MODE_DEFAULT =  'default';
+    const MODE_READ_ONLY = 'readOnly';
+    const MODE_EXTENSIBLE = 'extensible';
 
     private function __construct(array $props, array $options = null) {
         $this->propMap = [];
@@ -23,7 +25,7 @@ final class DynObject implements ArrayAccess, Countable {
             $this->propMap[$k] = $v;
         }
         
-        $mode = @$options['mode'];
+        $mode = @$options[self::OPTION_MODE];
         
         if ($mode === null || $mode === self::MODE_DEFAULT) {
             $this->readOnly = false;

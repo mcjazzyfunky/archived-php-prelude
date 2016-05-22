@@ -12,7 +12,7 @@ class SeqTest extends PHPUnit_Framework_TestCase {
             'id' => 111,
             'firstName' => 'John',
             'lastName' => 'Doe'
-        ], ['mode' => DynObject::MODE_EXTENSIBLE]);
+        ], [DynObject::OPTION_MODE => DynObject::MODE_EXTENSIBLE]);
         
         $user->id = 222;
         $user->city = 'Seattle';
