@@ -5,7 +5,7 @@ namespace prelude\csv;
 final class CSVFormat {
     private $columns;
     private $delimiter;
-//    private $escapeChar;
+    private $escapeChar;
     private $quoteChar;
     private $suppressHeader;
     private $autoTrim;
@@ -13,7 +13,7 @@ final class CSVFormat {
     private function __construct() {
         $this->columns = null;
         $this->delimiter = ',';
-//        $this->escapeChar = '\\';
+        $this->escapeChar = '\\';
         $this->quoteChar = '"';
         $this->suppressHeader = false; 
         $this->autoTrim = false;
@@ -31,13 +31,11 @@ final class CSVFormat {
         return $ret;
     }
 
-/*
     function escapeChar($escapeChar) {
         $ret = clone $this;
         $ret->escapeChar = $escapeChar;
         return $ret;
     }
-*/
 
     function quoteChar($quoteChar) {
         $ret = clone $this;
@@ -61,7 +59,7 @@ final class CSVFormat {
         return [
             'columns' => $this->columns,
             'delimiter' => $this->delimiter,
-//            'escapeChar'=> $this->escapeChar,
+            'escapeChar'=> $this->escapeChar,
             'quoteChar' => $this->quoteChar,
             'suppressHeader' => $this->suppressHeader,
             'autoTrim' => $this->autoTrim

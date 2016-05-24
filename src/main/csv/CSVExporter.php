@@ -4,19 +4,18 @@ namespace prelude\csv;
 
 use InvalidArgumentException;
 use prelude\io\FileWriter;
+use prelude\util\CharsetRecoder;
 use prelude\util\Seq;
 
 final class CSVExporter {
     private $format;
     private $mapper;
-    private $sourceCharset;
-    private $targetCharset;
+    private $charsetRecoder;
 
     private function __construct() {
         $this->format = CSVFormat::create();
         $this->mapper = null;
-        $this->sourceCharset = 'UTF-8';
-        $this->targetCharset = 'UTF-8';
+        $this->charsetRecoder = null;
     }
     
     function format(CSVFormat $format) {
@@ -41,23 +40,12 @@ final class CSVExporter {
         return $ret;
     }
     
-    function sourceCharset($sourceCharset) {
+    function charsetRecoder($charsetRecoder) {
         $ret = $this;
         
-        if ($sourceCharset !== $this->sourceCharset) {
+        if ($charsetRecoder !== $this->charsetRecoder) {
             $ret = clone $this;
-            $ret->sourceCharset = $sourceCharset;
-        }
-        
-        return $ret;
-    }
-
-    function targetCharset($targetCharset) {
-        $ret = $this;
-        
-        if ($targetCharset !== $this->targetCharset) {
-            $ret = clone $this;
-            $ret->targetCharset = $targetCharset;
+            $ret->charsetRecoder = $charsetRecoder;
         }
         
         return $ret;
@@ -68,7 +56,7 @@ final class CSVExporter {
         $columns = $params['columns'];
         $delimiter = $params['delimiter'];
         $quoteChar = $params['quoteChar']; 
-//        $escapeChar = $params['escapeChar']; 
+        $escapeChar = $params['escapeChar']; 
         $suppressHeader = $params['suppressHeader'];
         $autoTrim = $params['autoTrim'];
         $stream = $writer->open();
@@ -85,11 +73,8 @@ final class CSVExporter {
                     $stream,
                     $columns,
                     $delimiter,
-                    $quoteChar
-/*
-                    ,$escapeChar
-*/
-                    );
+                    $quoteChar,
+                    $escapeChar);
             }
             
             foreach ($recs as $item) {
@@ -114,10 +99,11 @@ final class CSVExporter {
                         } else if ($autoTrim) {
                             $value = trim($value);
                         }
-                        
-                        if ($this->sourceCharset !== $this->targetCharset) {
-                            $value = $this->convertCharset($value);
-                        }
+                       
+                        if ($this->charsetRecoder !== null) {
+                            $value =
+                                $this->charsetRecoder->recodeString($value);
+                        } 
                         
                         if ($columns === null) {
                             $newMap[$idx] = $value;
@@ -140,12 +126,8 @@ final class CSVExporter {
                         $stream,
                         $newMap,
                         $delimiter,
-                        $quoteChar
-                        
-/*
-                        ,$escapeChar
-*/
-                        );
+                        $quoteChar,
+                        $escapeChar);
                         
                     fflush($stream);
                 }
@@ -178,9 +160,5 @@ final class CSVExporter {
                 });
 
         return $ret;
-    }
-    
-    private function convertCharset($value) {
-        return mb_convert_encoding($value, $this->targetCharset, $this->sourceCharset);
     }
 }

@@ -18,7 +18,7 @@ final class FileReader {
         return $openFile();
     }
 
-    function readreadFully() {
+    function readFully(CharsetRecoder $charsetRecoder = null) {
         $ret = '';
         $stream = $this->open();
 
@@ -30,17 +30,31 @@ final class FileReader {
             fclose($stream);
         }
 
+        if ($charsetRecoder !== null) {
+            $ret = $charsetRecoder->recodeString($ret);
+        }
+
         return $ret;
     }
     
-    function readSeq() {
+    function readSeq($separator = null, CharsetRecoder $charsetRecoder = null) {
         $openFile = $this->openFile;
         
         return Seq::from(function() use ($openFile) {
             $stream = $openFile();
             
             try {
-                while (($line = @fgets($stream)) !== false) {
+                while (true) {
+                    $line =
+                        $separator = null
+                        ? @fgets($stream)
+                        : @stream_get_line($stream, 1024, $separator);
+                    
+                    if ($line === false) {
+                        break;
+                    }
+                    
+                    
                     $length = strlen($line);
                     
                     while ($length > 0
@@ -49,7 +63,14 @@ final class FileReader {
                         --$length;
                     }
                     
-                    yield substr($line, 0, $length);
+                    $line = substr($line, 0, $length);
+
+                    if ($charsetRecoder !== null) {
+                        $line = $charsetRecoder->recodeString($line);
+                    }
+                    
+                    yield $line;
+                    
                 }
                 
                 if (!feof($stream)) {
@@ -72,6 +93,9 @@ final class FileReader {
         return new self($openFile);
     }
     
+    
+    // TODO: Is this really necessary?!?
+    /*
     static function fromString($text) {
         $openFile = function () use ($text) {
             $stream = fopen('php://memory', 'wr');
@@ -82,4 +106,5 @@ final class FileReader {
         
         return new self($openFile);
     }
+    */
 }

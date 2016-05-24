@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../../include.php';
 
 use Exception;
 use PHPUnit_Framework_TestCase;
+use prelude\util\CharsetRecoder;
 use prelude\util\Seq;
 use prelude\io\FileWriter;
 
@@ -45,8 +46,8 @@ class CSVExporterTest extends PHPUnit_Framework_TestCase {
                     
                     return Seq::from([$rec, $rec2]);
                 })
-                ->sourceCharset('UTF-8')
-                ->targetCharset('ISO-8859-1')
+                ->charsetRecoder(
+                    CharsetRecoder::create('UTF-8', 'ISO-8859-1'))
                 ->export(
                     Seq::from($recs),
                     FileWriter::fromFile('php://stdout'));

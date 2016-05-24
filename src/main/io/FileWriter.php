@@ -32,17 +32,22 @@ final class FileWriter {
         return $openFile($this);
     }
     
-    function writereadFully($text) {
+    function writeFully($text, CharsetRecoder $charsetRecoder = null) {
         if (!is_string($text)) {
             throw new InvalidArgumentException(
                 '[FileWriter#writeFull] First argument $text must be a string');
         }
         
-        $length = strlen($text);
+        $textToOutput = 
+            $charsetRecoder !== null
+            ? $charsetRecoder->recodeString($text)
+            : $text;
+            
+        $length = strlen($textToOutput);
         $stream = $this->open();
         
         try {
-            $result = fwrite($stream, $text, $length);
+            $result = fwrite($stream, $textToOutput, $length);
     
             if ($result === false || $result !== $length) {
                 $message = error_get_last()['message'];
@@ -55,13 +60,22 @@ final class FileWriter {
         return $length;
     }
     
-    function writeSeq(Seq $seq, $separator = "\n") {
+    function writeSeq(
+        Seq $seq,
+        $separator = "\n",
+        CharsetRecoder $charsetRecoder = null) {
+        
+        
         $itemCount = 0;
         $stream = $this->open();
         
         try {
             foreach ($seq as $item) {
                 ++$itemCount;
+
+                if ($charsetRecoder !== null) {
+                    $item = $charsetRecoder->recodeString($item);
+                }
                 
                 foreach ([$item, $separator] as $s) {
                     $result = fwrite($stream, $s);

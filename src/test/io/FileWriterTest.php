@@ -11,13 +11,13 @@ class FileWriterTest extends \PHPUnit_Framework_TestCase {
         $filename = tempnam(sys_get_temp_dir(), 'txt');
         
         FileWriter::fromFile($filename)
-            ->writereadFully('This is a test');
+            ->writeFully('This is a test');
             
         $this->assertEquals(file_get_contents($filename), 'This is a test');
 
         FileWriter::fromFile($filename)
             ->append()
-            ->writereadFully('|This is a test');
+            ->writeFully('|This is a test');
 
         $this->assertEquals(
             file_get_contents($filename),

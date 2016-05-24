@@ -7,23 +7,24 @@ require_once __DIR__ . '/../../../include.php';
 use prelude\util\Seq;
 
 class FileReaderTest extends \PHPUnit_Framework_TestCase {
-    function testMethodReadreadFully() {
+    function testMethodReadFully() {
         $filename = tempnam(sys_get_temp_dir(), 'txt');
         
         file_put_contents($filename, "a\nb\nc");
         
         $content =
             FileReader::fromFile($filename)
-                ->readreadFully();
+                ->readFully();
         
         $this->assertEquals($content, "a\nb\nc");
         
-        
+/*
         $content =
             FileReader::fromString('this is a test')
-                ->readreadFully();
+                ->readFully();
                 
         $this->assertEquals($content, 'this is a test');
+*/
     }
     
     function testMethodReadLines() {

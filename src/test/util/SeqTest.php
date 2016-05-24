@@ -2,11 +2,28 @@
 
 namespace prelude\util;
 
+require_once __DIR__ . '/../../../include.php';
+
 error_reporting(E_ALL);
 
 use PHPUnit_Framework_TestCase;
 
 class SeqTest extends PHPUnit_Framework_TestCase {
+    function testMethodFrom() {
+        $this->assertEquals(
+            Seq::from([1, 2, 3]),
+            [1, 2, 3]);
+        
+        $this->assertEquals(
+            Seq::from(function () {
+                    yield 2;
+                    yield 4;
+                    yield 6;
+                })
+                ->toArray(),
+            [2, 4, 6]);
+    }
+    
     function testMethodFilter() {
         $arr = Seq::range(1, 10)
             ->filter(function ($n) {
