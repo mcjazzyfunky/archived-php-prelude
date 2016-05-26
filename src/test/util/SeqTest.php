@@ -11,7 +11,8 @@ use PHPUnit_Framework_TestCase;
 class SeqTest extends PHPUnit_Framework_TestCase {
     function testMethodFrom() {
         $this->assertEquals(
-            Seq::from([1, 2, 3]),
+            Seq::from([1, 2, 3])
+                ->toArray(),
             [1, 2, 3]);
         
         $this->assertEquals(
@@ -108,7 +109,7 @@ class SeqTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($arr, [1, 2, 3]);
     }
 
-    function testMethodFrom() {
+    function testMethodFrom2() {
         $seq1 = Seq::from([1, 2, 3]);
         $seq2 = Seq::from($seq1);
         $this->assertEquals($seq1, $seq2);

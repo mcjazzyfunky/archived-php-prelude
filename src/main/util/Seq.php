@@ -1,4 +1,11 @@
 <?php
+/**
+ * php-prelude
+ * 
+ * @link       https://github.com/mcjazzyfunky/php-prelude
+ * @copyright  Copyright (c) 2015-2016 R. Obmann
+ * @license    New BSD License
+ */
 
 namespace prelude\util;
 
@@ -8,15 +15,93 @@ use InvalidArgumentException;
 use IteratorAggregate;
 use UnexpectedValueException; 
 
+/**
+ * Stateless representation of a lazy sequence that can either enumerate
+ * a finite or an infite number of items.
+ * Class Seq extends the PHP standard interface IteratorAggregate therefore
+ * sequences can be used in foreach loops (nevertheless, Seqs also provides
+ * a higher order method called 'each' which does the same in a more functional
+ * fashion).
+ * As Seqs are stateless and immutable, they can be traversed as often as
+ * desired and also passed around without fearing any unexpected side effects.
+ * 
+ * Class Seq is comparable to similar-well known counterparts
+ * in other programming languages:
+ * 
+ * - "Stream" in Java 8, Scala and Scheme
+ * - "Seq" in Clojure/ClojureScript
+ * - "Lazy list" in Haskell
+ * - "IEnumerable" in C#
+ * - etc.
+ * 
+ * Several factory methods are available to build new sequences
+ * (e.g., all of the following examples generate the same sequence:
+ * 1, 2, 3, 4):
+ * 
+ * ``` 
+ * - Seq::range(1, 5)
+ * - Seq::from([1, 2, 3, 4])
+ * - Seq::from(function () {
+ *       yield 1;
+ *       yield 2;
+ *       yield 3;
+ *       yield 4;
+ *   } 
+ * - etc.
+ * ```
+ */
 final class Seq implements IteratorAggregate {
+    /**
+     * Generator function that yields the items of the Seq one by one
+     * 
+     * var Closure 
+     */ 
     private $generatorFunction;
-    private $args;
     
-    private function __construct(Closure $generatorFunction, array $args = null) {
+    /**
+     * Arguments for the generator function that will be invoked at the
+     * beginning of the sequence iteration
+     * 
+     * var array|null
+     */
+    private $args;
+   
+    /**
+     * Constructor
+     * 
+     * @param Closure $generatorFunction
+     *     Yields the items of the Seq
+     * @param array|null $args
+     *     Arguments when applying the generator function at the beginning
+     *     of the iteration.
+     */
+    private function __construct(
+        callable $generatorFunction,
+        array $args = null) {
+        
         $this->generatorFunction = $generatorFunction;
         $this->args = $args;
     }
-    
+   
+    /**
+     * Filters the sequence by a filter predicate
+     * 
+     * Example:
+     *    ```
+     *    Seq::range(1, 10)
+     *        ->filter(function ($n) {
+     *            return $n % 2 === 0;
+     *        })
+     *    // Result: 2, 4, 6, 8
+     *    ```
+     * 
+     * @param callable $pred
+     *   The predicate function used for filtering
+     *   First argument will be the sequence item.
+     *   Second argument will be the current iteration index
+     *   starting with 0.
+     * @return Seq The filtered sequence
+     */
     function filter(callable $pred) {
         return new self(function () use ($pred) {
             $idx = -1;
@@ -29,18 +114,70 @@ final class Seq implements IteratorAggregate {
         });
     }
     
+    /**
+     * Filters the sequence by a rejecting items that satisfy a given predicate 
+     *
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 3, 4, 5, 6, 7])
+     *       ->reject(function ($n) {
+     *           return $n % 3 === 0;
+     *       });
+     *   // Result: 1, 2, 4, 5, 7
+     *   ```
+     * 
+     * @param callable $pred
+     *   The predicate function used for filtering to pick up the items that
+     *   shall be rejected.
+     *   First argument will be the sequence item.
+     *   Second argument will be the current iteration index
+     *   starting with 0.
+     * @return Seq
+     *   The filtered sequence
+     */
     function reject(callable $pred) {
         return $this->filter(function ($item, $idx) {
             return !$pred($item, $idx);
         });
     }
-    
+   
+    /**
+     * Filters the sequence by rejecting all null values.
+     *
+     * Example:
+     *   ```
+     *   Seq::from([1, null, 2, null, null, 3])
+     *       ->rejectNulls()
+     *   // Result: 1, 2, 3
+     *   ```
+     * 
+     * @return Seq
+     *   Null-value free sequence
+     */ 
     function rejectNulls() {
         return $this->filter(function ($item) {
             return $item !== null;
         });
     }
 
+    /**
+     * Transforms the sequence to another sequence of the same length
+     * by mapping each element using a given mapper function
+     *
+     * Example:
+     *   ```
+     *   Seq::map([1, 2, 3])
+     *       ->map(function ($n) {
+     *           return $n * $n;
+     *       });
+     *   // Result: 1, 4, 9
+     *   ```
+     * 
+     * @param callable $fn
+     *   The mapper function
+     * @return Seq
+     *   The transformed Seq
+     */ 
     function map(callable $fn) {
         return new self(function () use ($fn) {
             $idx = -1;
@@ -50,7 +187,21 @@ final class Seq implements IteratorAggregate {
             }
         });
     }
-    
+   
+    /**
+     * Limits the sequence of to the first nth items.
+     * 
+     * Example:
+     *   ```
+     *   Seq::range(2, 10)
+     *       ->take(4)
+     *   // Result: 2, 3, 4, 5
+     *   ```
+     * @param int $n
+     *   The maximal length of the limited sequence
+     * @return Seq
+     *   The limited sequence
+     */
     function take($n) {
         if (!is_int($n)) {
             throw new InvalidArgumentException(
@@ -69,7 +220,24 @@ final class Seq implements IteratorAggregate {
             }
         });
     }
-    
+   
+    /**
+     * Limits the sequence by taking as many items as satisfying the
+     * given predicate
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 4, 8, 16, 32])
+     *       ->takeWhile(function ($n) {
+     *           return $n < 10;
+     *       })
+     *   // Result: 1, 2, 4, 8
+     * 
+     * @param callable $pred
+     *   The predicate to test the items
+     * @result Seq
+     *   The limited sequence
+     */
     function takeWhile(callable $pred) {
         return new self(function () use ($pred) {
             $idx = -1;
@@ -83,7 +251,22 @@ final class Seq implements IteratorAggregate {
             }
         });
     }
-    
+   
+    /**
+     * Omits the first n items of the sequence
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 4, 8, 16, 32])
+     *       ->skip(3)
+     *   // Result: 8, 16, 32
+     *   ```
+     *
+     * @param int $n
+     *   The number of items to be ignored
+     * @result Seq
+     *   The resulting subsequence
+     */
     function skip($n) {
         if (!is_int($n)) {
             throw new InvalidArgumentException(
@@ -101,6 +284,24 @@ final class Seq implements IteratorAggregate {
         });
     }
 
+    /**
+     * Omits leading elements of the sequence as long as they satisfy a
+     * given predicate
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 4, 8, 16, 32])
+     *       ->skipWhile(function ($n) {
+     *           return $n < 10;
+     *       });
+     *   // Result: 16, 32
+     *   ```
+     * 
+     * @param callable $pred
+     *   The predicate to test the items
+     * @return Seq
+     *   The resulting subsequence
+     */
     function skipWhile(callable $pred) {
         return new self(function () use ($pred) {
             $idx = -1;
@@ -118,6 +319,21 @@ final class Seq implements IteratorAggregate {
         });
     }
     
+    /**
+     * Maps each element of the sequence to a sequence (using Seq::from)
+     * and flattens the sequence of sequences to a single sequence
+     * afterwards
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 3], Seq::from([4, 5]))
+     *       ->flatten()
+     *   // Result: 1, 2, 3, 4, 5
+     *   ```
+     *
+     * @result Seq
+     *   The flattened sequence
+     */
     function flatten() {
         return new self(function () {
             foreach ($this as $item) {
@@ -127,32 +343,126 @@ final class Seq implements IteratorAggregate {
             } 
         });
     }
-    
+   
+    /**
+     * Maps each element of a seqence by the given mapper function,
+     * interpretes each mapped value as sequence and flattens the
+     * sequence of seqences afterwards
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 3])
+     *       ->flatMap(function ($n) {
+     *           return Seq::range($n, 4);
+     *       })
+     *   // Result: 1, 2, 3, 2, 3, 3
+     *   ```
+     * 
+     * @param callable $fn
+     *     The mapping function
+     * @return Seq
+     *     The resulting seuence after the mapping and flattening
+     */
     function flatMap(callable $fn) {
         return $this->map($fn)->flatten();
     }
     
+    /**
+     * Prepends a single element at the front of the sequence
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([2, 3, 4])
+     *       ->prepend(1)
+     *   // Result: 1, 2, 3, 4
+     * 
+     * @param mixed $item
+     *   The item to be prepended at the front
+     * @return Seq
+     *   The resulting sequence
+     */
     function prepend($item) {
         return Seq::concat(Seq::of($item), $this);
     }
     
+    /**
+     * Prepends multiple elements at the front of the sequence
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([3, 4, 5])
+     *       ->prependMany([1, 2])
+     *   // Result: 1, 2, 3, 4, 5
+     *   ```
+     * 
+     * @param array $items
+     *    The items to be prepended at the front
+     * @return
+     *   The resulting sequence
+     */
     function prependMany($items) {
         return Seq::concat($items, $this);
     }
 
+    /**
+     * Appends a single element at the end of the sequence
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 3])
+     *       ->append(4)
+     *   // Result: 1, 2, 3, 4
+     * 
+     * @param mixed $item
+     *   The item to be appended at the end
+     * @return Seq
+     *   The resulting sequence
+     */
     function append($item) {
         return Seq::concat($this, Seq::of($item));
     }
     
+    /**
+     * Appends multiple elements at the end of the sequence
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([1, 2, 3])
+     *       ->appendMany([4, 5])
+     *   // Result: 1, 2, 3, 4, 5
+     *   ```
+     * 
+     * @param array $items
+     *    The items to be appended at the front
+     * @return
+     *   The resulting sequence
+     */
     function appendMany($items) {
         return Seq::concat($this, $items);
     }
     
-    function sort($order = null) {
-        if ($order !== null && !is_integer($order) && !is_callable($order)) {
+    /**
+     * Sorts a sequence
+     * 
+     * Example:
+     *   ```
+     *   Seq::from([2, 4, 3, 1])
+     *       ->sort()
+     *   // Result: 1, 2, 3, 4
+     *   ```
+     * 
+     * @param mixed $order
+     *    The sort order, must either be an integer constant as used for
+     *    PHP standard function 'sort' or a callable to provide a customized
+     *    sort order
+     * @return Seq
+     *    The sorted sequence
+     */
+    function sort($order = SORT_REGULAR) {
+        if (!is_integer($order) && !is_callable($order)) {
             throw new InvalidArgumentException(
                 '[Seq#sort] First argument $order must either be an integer '
-                . 'or a callabel or null');
+                . 'or a callable');
         }
         
         return new self(function () use ($order) {

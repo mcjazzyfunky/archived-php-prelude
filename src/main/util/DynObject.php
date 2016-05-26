@@ -8,9 +8,9 @@ use InvalidArgumentException;
 use RuntimeException;
 
 final class DynObject implements ArrayAccess, Countable {
-    protected $propMap;
-    protected $readOnly;
-    protected $extensible;
+    private $propMap;
+    private $readOnly;
+    private $extensible;
     
     const OPTION_MODE = 'mode';
     

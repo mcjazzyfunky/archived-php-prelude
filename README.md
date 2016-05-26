@@ -576,8 +576,8 @@ CSVExporter::create()
         
         return Seq::from([$rec, $rec2]);
     })
-    ->sourceCharset('UTF-8')
-    ->targetCharset('ISO-8859-1')
+    ->charsetRecoder(
+        CharsetRecoder::create('UTF-8', 'ISO-8859-1')
     ->export(
         Seq::from($recs),
         FileWriter::fromFile('php://stdout'));
